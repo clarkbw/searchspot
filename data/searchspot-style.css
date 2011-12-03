@@ -1,0 +1,14 @@
+/* searchspot-style.css */
+
+.searchbar-engine-button {
+  display: none;
+}
+.searchbar-textbox .textbox-input-box {
+  padding-left: 10px;
+}
+
+#searchspot-panel {
+  overflow: hidden;
+  -moz-transition: all 1s; 
+  transition: all 1s;
+}
