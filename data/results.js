@@ -119,8 +119,11 @@ self.port.on("yelp", function(results) {
   $("#"+id).find(".result." + results.type).remove();
 
   // Use the DOM to parse and extract the title information
-  var terms = [];
+  var terms = [], count = 3;
   $("<div/>").html(results.results).find("li[title]").each(function () {
+    if (count-- <= 0) {
+      return;
+    }
     terms.push($(this).attr("title"));
   });
 
