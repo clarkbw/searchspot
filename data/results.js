@@ -109,9 +109,33 @@ self.port.on("engines", function(engines) {
   gEngines = engines;
 });
 
-self.on("message", function(addonMessage) {
-  // Handle the message
-  console.log(addonMessage);
+// XXX This hack takes the Yelp HTML results
+self.port.on("yelp", function(results) {
+  // { "terms" : terms, "name" : name, "results" : "<ul><li title='suggest item'></li></ul>", "type" : type }
+  var id = _convertEngineName(results.name);
+
+  // XXX this is what causes all of our jumping, we could just overwrite the results
+  // we don't need anymore
+  $("#"+id).find(".result." + results.type).remove();
+
+  // Use the DOM to parse and extract the title information
+  var terms = [];
+  $("<div/>").html(results.results).find("li[title]").each(function () {
+    terms.push($(this).attr("title"));
+  });
+
+  for (var i in terms) {
+    var item = terms[i];
+    //dump("item: " + item + "\n");
+    if (results.type == "suggest") {
+      $("#"+id).append(suggest(results.name, item, results.terms));
+    } else if (results.type == "match") {
+      $("#"+id).append(match(results.name, item, results.terms, ""));
+    }
+
+  }
+  // This should send a height/width adjustment to our main window so the panel can be resized
+  self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
 });
 
 
