@@ -139,6 +139,9 @@ self.port.on("yelp", function(results) {
 
   for (var i in terms) {
     var item = terms[i];
+    if (results.terms == item) {
+      continue;
+    }
     //dump("item: " + item + "\n");
     if (results.type == "suggest") {
       $("#"+id).append(suggest(results.name, item, results.terms));
