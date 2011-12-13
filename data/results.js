@@ -159,6 +159,10 @@ self.port.on("yelp", function(results) {
 // returns <strong>wrappers</strong> around the terms found in the text
 function highlight(text, terms) {
   var index = text.toLowerCase().indexOf(terms.toLowerCase());
+  // the terms could not exist in the text at all
+  if (index < 0) {
+    return text;
+  }
   var pre = text.substring(0, index);
   var mid = text.substring(index, index + terms.length);
   var post = text.substring(index + terms.length, text.length);
