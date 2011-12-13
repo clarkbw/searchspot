@@ -24,13 +24,13 @@ self.port.on("add", function(results) {
 
     // If the same result already exists in the previous parents ignore this item
     // XXX this isn't particularly fast but works
-    if ($("#"+id).prevAll().find(".result." + results.type + "[title='" + item.title + "']").length > 0) {
+    if ($("#"+id).prevAll().find(".result." + results.type + "[title='" + _convertTitle(item.title) + "']").length > 0) {
       continue;
     }
 
     // If the same result exists in one of the items below us remove it because this should be more important
     // XXX this isn't particularly fast but works
-    $("#"+id).nextAll().find(".result." + results.type + "[title='" + item.title + "']").remove()
+    $("#"+id).nextAll().find(".result." + results.type + "[title='" + _convertTitle(item.title) + "']").remove()
 
     if (results.type == "suggest") {
       $("#"+id).append(suggest(results.name, item.title, item.terms));
@@ -166,7 +166,7 @@ function highlight(text, terms) {
 }
 
 function match(engine, title, terms, url) {
-  return $("<li/>").attr({ "class" : "result match", "title" : title }).append(
+  return $("<li/>").attr({ "class" : "result match", "title" : _convertTitle(title) }).append(
           $("<a class='choice match'/>").attr({"href" : url}).
                                          data({ "type" : "match", "engine" : engine, "terms" : title }).
                                          append(
@@ -177,7 +177,7 @@ function match(engine, title, terms, url) {
 }
 
 function suggest(engine, title, terms) {
-  return $("<li/>").attr({ "class" : "result suggest", "title" : title }).append(
+  return $("<li/>").attr({ "class" : "result suggest", "title" : _convertTitle(title) }).append(
           $("<a class='choice suggest'/>").attr({"href": gEngines[engine].search}).
                                            data({ "type" : "suggest", "engine" : engine, "terms" : title }).
                                            append(
@@ -191,6 +191,12 @@ function suggest(engine, title, terms) {
 // XXX this is not good but works *shrug*
 function _convertEngineName(engineName) {
   return engineName.replace(/[\s(\)\.]*/g, "_")
+}
+
+// utility function to make the search term into a slightly valid title
+// XXX this is not good but works *shrug*
+function _convertTitle(title) {
+  return title.replace(/[\s(\)\.'"]*/g, "_")
 }
 
 
