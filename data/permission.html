@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" id="searchspot-results">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <script type="text/javascript" src="jquery.1.6.4.js"></script>
+  <script type="text/javascript">
+  // This is for debugging purposes, these <scripts> are ignored by the panel loader
+  if (!self.port) {
+    self.port = { on : function(signal, callback) { }, emit : function(signal, objects) {}  };
+  }
+  </script>
+  <script type="text/javascript" src="permission.js"></script>
+
+  <title>searchspot permission</title>
+
+  <style>
+    * {
+        margin: 0;
+        padding: 0;
+        -webkit-box-sizing: border-box; 
+           -moz-box-sizing: border-box;
+                box-sizing: border-box;
+    }
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif;
+      font-size: 14px;
+      color: #222;
+      background-color: #FDF5D9;
+      overflow: hidden;
+      width: 500px;
+      height: 240px;
+    }
+    p {
+      line-height: 21px;
+      margin: 10px;
+    }
+    ul {
+      margin: 20px 10px;
+      list-style: none;
+    }
+    li {
+      margin: 5px 0;
+    }
+    button {
+      margin: 10px;
+      position: relative;
+      overflow: visible;
+      display: inline-block;
+      padding: 1em 2em;
+      border: 1px solid #d4d4d4;
+      text-decoration: none;
+      text-shadow: 1px 1px 0 #fff;
+      white-space: nowrap;
+      cursor: pointer;
+      outline: none;
+      background-color: #ececec;
+      background-image: -moz-linear-gradient(#f4f4f4, #ececec);
+      background-image: linear-gradient(#f4f4f4, #ececec);
+      -moz-background-clip: padding;
+      background-clip: padding-box;
+      -moz-border-radius: 0.2em;
+      border-radius: 0.2em;
+    }
+    
+    button:hover,
+    button:focus,
+    button:active,
+    button.active {
+      border-color: #3072b3;
+      border-bottom-color: #2a65a0;
+      text-decoration: none;
+      text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
+      color: #fff;
+      background-color: #3C8DDE;
+      background-image: -moz-linear-gradient(#599bdc, #3072b3);
+      background-image: linear-gradient(#599bdc, #3072b3);
+    }
+    
+    button:active,
+    button.active {
+      border-color: #2a65a0;
+      border-bottom-color: #3884CF;
+      background-color: #3072b3;
+      background-image: -moz-linear-gradient(#3072b3, #599bdc);
+      background-image: linear-gradient(#3072b3, #599bdc);
+    }
+    
+    /* overrides extra padding on button elements in Firefox */
+    button::-moz-focus-inner {
+        padding: 0;
+        border: 0;
+    }
+
+
+
+    #ok {
+      font-weight: bold;
+    }
+
+    #not {
+    }
+
+    #not:hover,
+    #not:focus,
+    #not:active {
+        border-color: #b53f3a;
+        border-bottom-color: #a0302a;
+        color: #fff;
+        background-color: #dc5f59;
+        background-image: -moz-linear-gradient(#dc5f59, #b33630);
+        background-image: linear-gradient(#dc5f59, #b33630);
+    }
+    #not:active,
+    #not.active {
+        border-color: #a0302a;
+        border-bottom-color: #bf4843;
+        background-color: #b33630;
+        background-image: -moz-linear-gradient(#b33630, #dc5f59);
+        background-image: linear-gradient(#b33630, #dc5f59);
+    }
+
+    #otherwise {
+      color: #666;
+      text-align: center;
+    }
+    .scary {
+      color: #000 !important;
+      text-decoration: underline;
+    }
+
+  </style>
+</head>
+<body>
+  <div>
+    <p>Sorry! To use this you must understand the following</p>
+    <ul>
+      <li><strong>Location</strong>: will be shared with certain search services for better results</li>
+      <li><strong>Usage</strong>: anonymous data is shared with the developers to help us improve</li>
+    </ul>
+    <div style="text-align: center;">
+    <button id="ok">That's fine, lets try this!</button>  <button id="not">Not cool, I'm outa here</button>
+    </div>
+    <p id="otherwise">If you don't agree you'll have to uninstall this add-on</p>
+  </div>
+</body>
+</html>
