@@ -17,6 +17,7 @@ $(document).ready(function () {
   }).mouseout(function() {
     $("#otherwise").removeClass("scary");
   });
+
   self.port.emit("resize", { "width" : $("body").width(), "height" : $("body").height() });
 
 });
