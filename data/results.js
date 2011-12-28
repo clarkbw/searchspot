@@ -233,7 +233,7 @@ function suggest(id, engine, title, terms) {
 
   $suggest.addClass("suggest").
            attr({"title" : _convertTitle(title)}).
-           data({ "type" : "match", "terms" : title }).
+           data({ "type" : "suggest", "terms" : title }).
            append(
               $("<span class='search'/>").text("search"),
               $("<span class='terms'/>").html(highlight(title, terms))
