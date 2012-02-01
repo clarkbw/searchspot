@@ -58,6 +58,9 @@ function add(results) {
     count++;
   }
 
+  // reset the initial selection class so we always choose a default option on new results
+  $("ul:first, .result:first").trigger("mouseover");
+
   // This should send a height/width adjustment to our main window so the panel can be resized
   self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
 }
