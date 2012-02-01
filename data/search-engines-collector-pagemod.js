@@ -10,14 +10,14 @@
 
 
 var links = document.querySelectorAll("link[rel=search][type='application/opensearchdescription+xml']");
-console.log(links);
+//console.log(links);
 var results = [];
-console.log("site", document.URL);
+//console.log("site", document.URL);
 for (var i in links) {
   var title = links[i].getAttribute("title");
-  console.log("title", title);
+  //console.log("title", title);
   var href = links[i].getAttribute("href");
-  console.log("href", href);
-  results.push({ site : document.URL, name : title, engine : href });
+  //console.log("href", href);
+  results.push({ site : document.URL, name : title, opensearch : href });
 }
 self.postMessage(results);
