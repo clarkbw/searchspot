@@ -10,7 +10,9 @@ self.port.on("add", function(results) {
 // An engine could already have old results listed so this must clear those out
 function add(results) {
   // { "name" : name, "type" : type, "terms" : terms, "results" : [ "title" : title, "url" : url ] }
-  var id = _convertEngineName(results.name);
+  var id = _convertEngineName(results.id);
+
+  //console.log("add", id, results, results.id);
 
   // Keep track of how many results we use from the list
   var count = 0;
@@ -43,9 +45,9 @@ function add(results) {
 
     // Actually set the result into our engine
     if (results.type == "suggest") {
-      suggest(id, results.name, item.title, results.terms);
+      suggest(id, item.title, results.terms);
     } else if (results.type == "match") {
-      match(id, results.name, item.title, results.terms, item.url);
+      match(id, item.title, results.terms, item.url);
     }
 
   }
@@ -66,6 +68,7 @@ self.port.on("setTerms", function(terms) {
 
 // Called often, when new search terms are entered by the user we update
 function setTerms(terms) {
+  //console.log("setTerms", terms);
   $("#results ul.type li.result.default").each(function () {
     $(this).data({"terms" : terms });
     $(this).find("span.terms").html(highlight(terms, terms));
@@ -77,7 +80,7 @@ self.port.on("addEngine", function(engine) {
 });
 
 function addEngine(engine) {
-  $("#results").append(createEngine(engine));
+  (createEngine(engine)).insertBefore("ul.preferences");
 }
 
 self.port.on("removeEngine", function(engine) {
@@ -85,26 +88,25 @@ self.port.on("removeEngine", function(engine) {
 });
 
 function removeEngine(engine) {
-  var id = _convertEngineName(engine.name);
+  var id = _convertEngineName(engine.id);
   $("#" + id).remove();
 }
 
 function createEngine(engine) {
-  var id = _convertEngineName(engine.name);
+  var id = _convertEngineName(engine.id);
+  //console.log("createEngine", id, engine, engine.name, engine.id);
   return $("<ul/>").attr({ "id" : id, "class" : "type" })
                   .append(
                     $("<li/>").attr({ "class" : "result default", "title" : engine.description }).
                                css({ "list-style-image" : "url('" + engine.icon + "')" }).
-                               data({ "type" : "suggest", "engine" : engine.name }).
+                               data({ "type" : "suggest", "engine" : engine.id }).
                                append(
-                                  $("<span class='engine'/>").text(engine.name),
-                                  $("<span class='dash'/>").html(" &mdash; "),
                                   $("<span class='terms'/>"),
-                                  $("<span class='search'/>").text("search")
+                                  $("<span class='search'/>").text(engine.name)
                                ),
-                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.name }),
-                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.name }),
-                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.name })
+                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
+                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
+                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id })
                   );
 }
 
@@ -119,6 +121,16 @@ function setEngines(engines) {
   for (var engine in engines) {
     $("#results").append(createEngine(engines[engine]));
   }
+
+  $("#results").append($('<ul class="preferences"/>').append(
+                                         $('<li/>').attr({ "id" :"preferences"}).text("Search Preferences...").
+                                         click(function () {
+                                                  self.port.emit("preferences");
+                                                  return false;
+                                              }
+                                          )
+                                        )
+                      );
 
   // set the initial selection class so we have a default option selected
   $("ul:first, .result:first").trigger("mouseover");
@@ -217,27 +229,23 @@ function _resetResult($item) {
 }
 
 // apply a match to the first unused node
-function match(id, engine, title, terms, url) {
+function match(id, title, terms, url) {
   var $match = $("#" + id).find(".result:not(.default):not(.match)").first();
 
   $match.addClass("match").
          attr({"title" : _convertTitle(title), "href" : url}).
          data({ "type" : "match", "terms" : title }).
-         append(
-            $("<span class='go'/>").text("go"),
-            $("<span class='title'/>").html(highlight(title, terms))
-          );
+         append($("<span class='title'/>").html(highlight(title, terms)));
 }
 
 // apply a suggestion to the first unused node
-function suggest(id, engine, title, terms) {
+function suggest(id, title, terms) {
   var $suggest = $("#" + id).find(".result:not(.default):not(.suggest)").first();
 
   $suggest.addClass("suggest").
            attr({"title" : _convertTitle(title)}).
            data({ "type" : "suggest", "terms" : title }).
            append(
-              $("<span class='search'/>").text("search"),
               $("<span class='terms'/>").html(highlight(title, terms))
             );
 }
@@ -245,13 +253,13 @@ function suggest(id, engine, title, terms) {
 // utility function to make the engine name into a usable id
 // XXX this is not good but works *shrug*
 function _convertEngineName(engineName) {
-  return engineName.replace(/[\s(\)\.]*/g, "_")
+  return engineName.replace(/[\s\W]+/g, "_")
 }
 
 // utility function to make the search term into a slightly valid title
 // XXX this is not good but works *shrug*
 function _convertTitle(title) {
-  return title.replace(/[\s(\)\.'"]*/g, "_")
+  return title.replace(/[\s\W]+/g, "_")
 }
 
 
