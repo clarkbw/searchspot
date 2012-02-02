@@ -171,31 +171,6 @@ function go() {
   $(".result.selected").click();
 }
 
-// This hack makes the Yelp HTML results work with real suggestion results
-self.port.on("yelp", function(results) {
-
-  // Use the DOM to parse and extract the title information (suggestions)
-  var terms = [], count = 3;
-  $("<div/>").html(results.results).find("li[title]").each(function () {
-    if (count-- <= 0) {
-      return;
-    }
-    var item = $(this).attr("title");
-
-    // Skip the suggestion that is a copy of our user entered terms
-    if (results.terms != item) {
-      terms.push({ "title" : item, "url" : ""});
-    }
-  });
-
-  results.results = terms;
-
-  // Send the new results to our add() method for inserting
-  add(results);
-
-});
-
-
 // Highlight the text with the terms provided while preserving the case used
 // returns <strong>wrappers</strong> around the terms found in the text
 function highlight(text, terms) {
