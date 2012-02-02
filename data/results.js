@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+const MAX_RESULTS = 3;
+
 self.port.on("add", function(results) {
   add(results);
 });
@@ -14,34 +16,14 @@ function add(results) {
 
   //console.log("add", id, results, results.id);
 
-  // Keep track of how many results we use from the list
-  var count = 0;
-
-  for (var i in results.results) {
+  for (var i = 0; i < results.results.length; i++) {
     // Suggestion Result
     var item = results.results[i];
     // HTML Node for our result
-    var $item = $("#"+id).children(":not(.default)").slice(count, count+1);
-
-    // If the same result already exists in the previous engines skip this suggestion
-    // XXX this isn't particularly fast but works
-    if ($("#"+id).prevAll().find(".result." + results.type + "[title='" + _convertTitle(item.title) + "']").length > 0) {
-      continue;
-    }
+    var $item = $("#"+id).children(":not(.default)").slice(i, i+1);
 
     // Reset this result node to prep for being set with the new suggestion
     _resetResult($item);
-
-    // At this point we're going to use this suggestion, up our count
-    count++;
-
-    // If the same result exists in one of the items below us remove it because this should be more important
-    // XXX this isn't particularly fast but works
-    $("#"+id).nextAll().find(".result." + results.type + "[title='" + _convertTitle(item.title) + "']").each(function () {
-      _resetResult($(this));
-    });
-
-    //dump("i: " + i + " : " + $("#"+id).children(":not(.default)").slice(count, count+1).attr("title") + "\n");
 
     // Actually set the result into our engine
     if (results.type == "suggest") {
@@ -52,8 +34,11 @@ function add(results) {
 
   }
 
+  // count of results this time, we need to clean out other possibly old results
+  var count = results.results.length;
+
   // Clean out old results from this engine
-  while (count < 3) {
+  while (count < MAX_RESULTS) {
     _resetResult($("#"+id).children(":not(.default)").slice(count, count+1));
     count++;
   }
