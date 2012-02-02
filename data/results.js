@@ -69,6 +69,9 @@ self.port.on("addEngine", function(engine) {
 
 function addEngine(engine) {
   (createEngine(engine)).insertBefore("ul.preferences");
+
+  // This should send a height/width adjustment to our main window so the panel can be resized
+  self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
 }
 
 self.port.on("removeEngine", function(engine) {
