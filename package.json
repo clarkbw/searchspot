@@ -1,9 +1,9 @@
 {
-    "name": "searchspot", 
-    "license": "MPL 1.1/GPL 2.0/LGPL 2.1", 
-    "author": "", 
-    "version": "0.1", 
-    "fullName": "searchspot", 
-    "id": "jid1-wB2HoBahvZDBDQ", 
-    "description": "a basic add-on"
+    "name": "searchspot",
+    "fullName" : "Awesome Search",
+    "description" : "Search suggestions from your history and multiple search engines to get you answers faster",
+    "license": "MPL 2.0",
+    "author": "Bryan Clark (http://clarkbw.net/) <clarkbw@gmail.com>",
+    "version": "0.3",
+    "id": "jid1-wB2HoBahvZDBDQ"
 }
