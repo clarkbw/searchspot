@@ -4,21 +4,22 @@
 
 const MAX_RESULTS = 3;
 
-self.port.on("add", function(results) {
-  add(results);
+self.port.on("suggestions", function(engine, terms, results) {
+  //console.log("port.suggestions", engine, terms, results);
+  suggestions(engine, terms, results);
 });
 
 // Add the relevant results to this engine
 // An engine could already have old results listed so this must clear those out
-function add(results) {
-  // { "name" : name, "type" : type, "terms" : terms, "results" : [ "title" : title, "url" : url ] }
-  var id = _convertEngineName(results.id);
+function suggestions(engine, terms, results) {
+  var id = _convertEngineName(engine.id);
 
-  //console.log("add", id, results, results.id);
 
-  for (var i = 0; i < results.results.length; i++) {
+  for (var i = 0; i < results.length; i++) {
     // Suggestion Result
-    var item = results.results[i];
+    var item = results[i];
+    //console.log("suggestions", id, item.title, item.url, terms);
+
     // HTML Node for our result
     var $item = $("#"+id).children(":not(.default)").slice(i, i+1);
 
@@ -26,16 +27,16 @@ function add(results) {
     _resetResult($item);
 
     // Actually set the result into our engine
-    if (results.type == "suggest") {
-      suggest(id, item.title, results.terms);
-    } else if (results.type == "match") {
-      match(id, item.title, results.terms, item.url);
+    if (engine.type == "suggest") {
+      suggest(id, item.title, terms);
+    } else if (engine.type == "match") {
+      match(id, item.title, item.url, terms, engine.icon);
     }
 
   }
 
   // count of results this time, we need to clean out other possibly old results
-  var count = results.results.length;
+  var count = results.length;
 
   // Clean out old results from this engine
   while (count < MAX_RESULTS) {
@@ -43,11 +44,9 @@ function add(results) {
     count++;
   }
 
-  // reset the initial selection class so we always choose a default option on new results
-  $("ul:first, .result:first").trigger("mouseover");
+  selectFirst();
 
-  // This should send a height/width adjustment to our main window so the panel can be resized
-  self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+  resizePanel();
 }
 
 self.port.on("setTerms", function(terms) {
@@ -57,77 +56,114 @@ self.port.on("setTerms", function(terms) {
 // Called often, when new search terms are entered by the user we update
 function setTerms(terms) {
   //console.log("setTerms", terms);
-  $("#results ul.type li.result.default").each(function () {
+  $("#results ul.engine li.result.default").each(function () {
     $(this).data({"terms" : terms });
-    $(this).find("span.terms").html(highlight(terms, terms));
+    $(this).find("span.terms").text(terms);
   });
-}
-
-self.port.on("addEngine", function(engine) {
-  addEngine(engine);
-});
-
-function addEngine(engine) {
-  (createEngine(engine)).insertBefore("ul.preferences");
-
-  // This should send a height/width adjustment to our main window so the panel can be resized
-  self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
-}
-
-self.port.on("removeEngine", function(engine) {
-  removeEngine(engine);
-});
-
-function removeEngine(engine) {
-  var id = _convertEngineName(engine.id);
-  $("#" + id).remove();
-}
-
-function createEngine(engine) {
-  var id = _convertEngineName(engine.id);
-  //console.log("createEngine", id, engine, engine.name, engine.id);
-  return $("<ul/>").attr({ "id" : id, "class" : "type" })
-                  .append(
-                    $("<li/>").attr({ "class" : "result default", "title" : engine.description }).
-                               css({ "list-style-image" : "url('" + engine.icon + "')" }).
-                               data({ "type" : "suggest", "engine" : engine.id }).
-                               append(
-                                  $("<span class='terms'/>"),
-                                  $("<span class='search'/>").text(engine.name)
-                               ),
-                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
-                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
-                    $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id })
-                  );
 }
 
 self.port.on("setEngines", function(engines) {
   setEngines(engines);
 });
 
+/*
+ * Structure of the results
+ *
+ * <all-suggestions #results>
+ *  <history type="matches" limit="1">
+ *  <web type="suggestions" limit="3">
+ *  <shopping type="suggestions" limit="3">
+ *  <social type="suggestions" limit="3">
+ *  <restaurants type="suggestions" limit="3">
+ *  <reference type="matches" limit="3">
+ *  <preferences>
+ * </all-suggestions>
+ *
+ */
 // Called only on initialization and when there are changes to the engines
 function setEngines(engines) {
   $("#results").empty();
 
-  for (var engine in engines) {
-    $("#results").append(createEngine(engines[engine]));
-  }
+  // Manually add in a history object to catch the history results
+  $("#results").append(createEngine({ "id" : "history", "name" : "History", "icon" : "data:image/icon;base64,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",
+                                      "type" : "match" }));
 
-  $("#results").append($('<ul class="preferences"/>').append(
-                                         $('<li/>').attr({ "id" :"preferences"}).text("Search Preferences...").
-                                         click(function () {
-                                                  self.port.emit("preferences");
-                                                  return false;
-                                              }
-                                          )
-                                        )
-                      );
+  engines.forEach(function (engine, i, a) {
+    var $engine = createEngine(engine);
+    if ($engine) {
+      $("#results").append($engine);
+    }
+  });
 
+  $("#results").append(preferences());
+
+  selectFirst();
+
+  resizePanel();
+}
+
+function selectFirst () {
   // set the initial selection class so we have a default option selected
-  $("ul:first, .result:first").trigger("mouseover");
+  $("ul:visible:first, .result:visible:first").trigger("mouseover");
+}
 
+function resizePanel () {
   // This should send a height/width adjustment to our main window so the panel can be resized
   self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+}
+
+function createEngine (engine) {
+  if (engine.type == "suggest") {
+    return suggestEngine(engine);
+  } else if (engine.type == "match") {
+    return matchEngine(engine);
+  }
+  console.error("createEngine", engine.id, engine.type, engine);
+  return null;
+}
+
+function matchEngine (engine) {
+  var id = _convertEngineName(engine.id);
+  //console.log("matchEngine", id, engine, engine.name, engine.id);
+  return $("<ul/>").attr({ "id" : id, "class" : "engine" })
+                   .append(
+                      $("<li/>").attr({ "class" : "result" }).
+                                 css({ "list-style-image" : "url('" + engine.icon + "')" }).
+                                 data({ "type" : "match", "engine" : engine.id, "engine-icon" : engine.icon }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id })
+                  );
+}
+
+function suggestEngine (engine) {
+  var id = _convertEngineName(engine.id);
+  //console.log("suggestEngine", id, engine, engine.name, engine.id);
+  return $("<ul/>").attr({ "id" : id, "class" : "engine" })
+                   .append(
+                      $("<li/>").attr({ "class" : "result default" }).
+                                 css({ "list-style-image" : "url('" + engine.icon + "')" }).
+                                 data({ "type" : "suggest", "engine" : engine.id }).
+                                 append(
+                                    $("<span class='terms'/>"),
+                                    $("<span class='search'/>").text(engine.name)
+                                 ),
+                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id })
+                  );
+}
+
+function preferences () {
+  return $('<ul class="preferences"/>').
+            append(
+                  $('<li/>').attr({ "id" :"preferences"}).
+                             text("Search Preferences...").
+                             click(function () {
+                                      self.port.emit("preferences");
+                                      return false;
+                                    }
+                              )
+                  );
 }
 
 self.port.on("next", function() {
@@ -190,18 +226,24 @@ function highlight(text, terms) {
 
 // remove any trace of match or suggestion from the result node
 function _resetResult($item) {
-  $item.removeClass("match suggest").removeAttr("title").empty();
-  jQuery.removeData($item, "type", "terms");
+  $item.removeClass("match suggest").empty();
+  jQuery.removeData($item, "terms");
 }
 
 // apply a match to the first unused node
-function match(id, title, terms, url) {
+function match(id, title, url, terms, icon) {
   var $match = $("#" + id).find(".result:not(.default):not(.match)").first();
 
   $match.addClass("match").
-         attr({"title" : _convertTitle(title), "href" : url}).
-         data({ "type" : "match", "terms" : title }).
-         append($("<span class='title'/>").html(highlight(title, terms)));
+         data({ "type" : "match", "terms" : title, "url" : url }).
+         append($("<span class='terms'/>").html(highlight(title, terms)));
+
+  // History results will provide their own icon for the site itself
+  if (id == "history" && icon) {
+    $match.css({ "list-style-image" : "url('" + icon + "')" })
+  } else {
+    $match.css({ "list-style-image" : "url('" + $match.data("engine-icon") + "')" })
+  }
 }
 
 // apply a suggestion to the first unused node
@@ -209,11 +251,8 @@ function suggest(id, title, terms) {
   var $suggest = $("#" + id).find(".result:not(.default):not(.suggest)").first();
 
   $suggest.addClass("suggest").
-           attr({"title" : _convertTitle(title)}).
-           data({ "type" : "suggest", "terms" : title }).
-           append(
-              $("<span class='terms'/>").html(highlight(title, terms))
-            );
+           data({ "type" : "suggest", "terms" : title, "url" : "" }).
+           append($("<span class='terms'/>").html(highlight(title, terms)));
 }
 
 // utility function to make the engine name into a usable id
@@ -231,26 +270,6 @@ function _convertTitle(title) {
 
 $(document).ready(function () {
 
-  // I'm testing with Chrome so we only show debug data in chrome and not our add-on
-  if ($.browser.webkit) {
-    setEngines([
-        { "name" : "Google", "search" : function(terms) { return "http://www.google.com/search?q=" + encodeURIComponent(terms); }, "icon" : "data:image/png;base64,AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADs9Pt8xetPtu9FsfFNtu%2BTzvb2%2B%2Fne4dFJeBw0egA%2FfAJAfAA8ewBBegAAAAD%2B%2FPtft98Mp%2BwWsfAVsvEbs%2FQeqvF8xO7%2F%2F%2F63yqkxdgM7gwE%2FggM%2BfQA%2BegBDeQDe7PIbotgQufcMufEPtfIPsvAbs%2FQvq%2Bfz%2Bf%2F%2B%2B%2FZKhR05hgBBhQI8hgBAgAI9ewD0%2B%2Fg3pswAtO8Cxf4Kw%2FsJvvYAqupKsNv%2B%2Fv7%2F%2FP5VkSU0iQA7jQA9hgBDgQU%2BfQH%2F%2Ff%2FQ6fM4sM4KsN8AteMCruIqqdbZ7PH8%2Fv%2Fg6Nc%2Fhg05kAA8jAM9iQI%2BhQA%2BgQDQu6b97uv%2F%2F%2F7V8Pqw3eiWz97q8%2Ff%2F%2F%2F%2F7%2FPptpkkqjQE4kwA7kAA5iwI8iAA8hQCOSSKdXjiyflbAkG7u2s%2F%2B%2F%2F39%2F%2F7r8utrqEYtjQE8lgA7kwA7kwA9jwA9igA9hACiWSekVRyeSgiYSBHx6N%2F%2B%2Fv7k7OFRmiYtlAA5lwI7lwI4lAA7kgI9jwE9iwI4iQCoVhWcTxCmb0K%2BooT8%2Fv%2F7%2F%2F%2FJ2r8fdwI1mwA3mQA3mgA8lAE8lAE4jwA9iwE%2BhwGfXifWvqz%2B%2Ff%2F58u%2Fev6Dt4tr%2B%2F%2F2ZuIUsggA7mgM6mAM3lgA5lgA6kQE%2FkwBChwHt4dv%2F%2F%2F728ei1bCi7VAC5XQ7kz7n%2F%2F%2F6bsZkgcB03lQA9lgM7kwA2iQktZToPK4r9%2F%2F%2F9%2F%2F%2FSqYK5UwDKZAS9WALIkFn%2B%2F%2F3%2F%2BP8oKccGGcIRJrERILYFEMwAAuEAAdX%2F%2Ff7%2F%2FP%2B%2BfDvGXQLIZgLEWgLOjlf7%2F%2F%2F%2F%2F%2F9QU90EAPQAAf8DAP0AAfMAAOUDAtr%2F%2F%2F%2F7%2B%2Fu2bCTIYwDPZgDBWQDSr4P%2F%2Fv%2F%2F%2FP5GRuABAPkAA%2FwBAfkDAPAAAesAAN%2F%2F%2B%2Fz%2F%2F%2F64g1C5VwDMYwK8Yg7y5tz8%2Fv%2FV1PYKDOcAAP0DAf4AAf0AAfYEAOwAAuAAAAD%2F%2FPvi28ymXyChTATRrIb8%2F%2F3v8fk6P8MAAdUCAvoAAP0CAP0AAfYAAO4AAACAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAA" },
-        { "name" : "Yelp", "search" : function(terms) { return "http://yelp.com/search?find_desc=" + encodeURIComponent(terms); }, "icon" : "data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAbgJqAIoCdgCaAnoAnhKCAKYijgCuLpIAskKeALpSpgC+Yq4AzHy8ANqezgDmvt4A7tLqAPz5+wD///8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAKlRFIoABWAKERERE6ADcKMzzu2hOgAAhERK8REWCWBERE36ERMHMEREvo6iEgY6hEn6Pu0mAzqkz/xjMzoDNwpERERDoAMzAKlERIoAAzMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD//wAA//8AAP//AADAOQAAgBkAAAAPAAAACQAAAAkAAAAIAAAACAAAAAgAAIAYAADAOAAA//8AAP//AAD//wAA" },
-        { "name" : "Amazon", "search" : function(terms) { return "http://www.amazon.com/s/?field-keywords=" + encodeURIComponent(terms); }, "icon" : "data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHgSURBVHjalFM9TNtQEP4cB7PwM1RITUXIgsRaYEEVEyKZwhiyZAQyd0BhpFOlIjoBqhjSqVQMoVMLLAjEwECCQJkSkBqJYDOAFOMKFSf28d7DTUxiUDnp/Pzeu/vuu7t3ICKF6SLTMv2/lB0fRWKfjwDm4JJisYh0Oo3fpZLYT0SjSCQS8JAFMADNDZ3NZsnf1taiqVTKi4nGASruk5lkkmTmMB6JUKFQqO+DfX1eABWeQoVR6f7HSdM0obqu48Yw8G1tDT82NsRd1TSbU9BbGPCog8PDj+jLzurFoAVgMh4XxoNDQ6SqKi0tL9eBvAB8zZwymYxYY7EYAoEA8vm82BNTg6XUIs0MeGTZoR1mhXSnwNl4pmAbjU7mcjkKhkL1ynMnntZ4OEw3VyrV8utk7s5TdW++0QXz+1i3P7IK36t+PCfVn1OQOoOA0gXr5DPak+cPXbBK+/T3S69AtY3LJ98vZ1or/iLr+pTuvr59/A6s003UdqZFJF/PCKQ3o5CUznoBST2AfbEF/9iqYEDaIfwj73VJPEfgNTe0tWNYR0uwy9uOW0OkrgHI7z5ADo2C7v48nLV3XHKAT+x/1m1sX58xsBxg8rZJrDYD8DHHp4aJj/MK09sXjPOt46PcCzAACXY8/u34wN0AAAAASUVORK5CYII=" },
-        { "name" : "Twitter", "search" : function(terms) { return "http://twitter.com/#!/search/" + encodeURIComponent(terms); }, "icon" : "data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A/v7+D/7+/j/+/v5g/v7+YP7+/mD+/v5I/v7+KP///wD///8A////AP///wD///8A////AP///wD+/v4H/v7+UPbv4pHgx47B1K9Y3tWwWN7Ur1je3sKCx+rbuKj+/v5n/v7+GP///wD///8A////AP///wD+/v4Y+fbweM2ycMe2iB7/vI0f/8STIf/KlyL/zJki/8yZIv/LmCL/0ahK5/Hp1JH+/v4Y////AP///wD///8A7OTTaquHN+CujkXPs5ZTv6N6G/+2iB7/xpUh/8yZIv/MmSL/zJki/8yZIv/Kmy738OjUi////wD///8A////AMKtfY7w6+Ef////AP///wD///8A3sqbp8iWIf/MmSL/zJki/8yZIv/MmSL/y5gi/8mePO7+/v4w////AP///wD///8A////AP///wD+/v4H/v7+V9CtWN3KmCL/zJki/8yZIv/MmSL/zJki/8yZIv/JlyH/5tSqp/7+/mD+/v4/////AP///wD///8A+PXvJtGyZdXNnS/3y5gi/8qYIv/LmCL/zJki/8yZIv/MmSL/y5gi/82iPO7LqVfe0byMmf///wD///8A/v7+D/Do1JHKmy73ypci/8KSIP+/jyD/xpQh/8uYIv/MmSL/zJki/8qYIv+/jyD/rIEd/9nKqH7///8A////APPu4TzAlSz3wZEg/7mLH/+sgR3/uZdGz7mLH//JlyH/zJki/8yZIv/GlSH/to0r9eXbxD/Vx6dg////AP7+/h/p38WhtIsq9al/HP+kfyjuybaKgf///wCzjzjlwJAg/8qYIv/JlyH/u4wf/8CkYrn///8A////AP///wDj2sRMnHUa/7meYa7Vx6dg////AP///wD///8A2MmnYK6DHf++jiD/vo4g/62CHf/k2sQ/////AP///wD///8A8OvhH/f07w////8A////AP///wD///8A////AP///wC/p3Cfpnwc/66GKvPg1LZ8////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////ANXHp2DJtoqByLWKgf///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A//8AAP//AADgPwAAwA8AAIAHAAB4BwAA+AMAAPAAAADgAQAA4AMAAMEDAADPhwAA/48AAP/nAAD//wAA//8AAA==" },
-        { "name" : "Wikipedia", "search" : function(terms) { return "http://en.wikipedia.org/w/index.php?title=Special%3ASearch&search=" + encodeURIComponent(terms); }, "icon" : "data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAEAgQAhIOEAMjHyABIR0gA6ejpAGlqaQCpqKkAKCgoAPz9%2FAAZGBkAmJiYANjZ2ABXWFcAent6ALm6uQA8OjwAiIiIiIiIiIiIiI4oiL6IiIiIgzuIV4iIiIhndo53KIiIiB%2FWvXoYiIiIfEZfWBSIiIEGi%2FfoqoiIgzuL84i9iIjpGIoMiEHoiMkos3FojmiLlUipYliEWIF%2BiDe0GoRa7D6GPbjcu1yIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" },
-        { "name" : "Ebay", "search" : function(terms) { return "http://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(terms); }, "icon" : "data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABFUlEQVQ4jdWTvUoDQRSFvxUfQMFSyBvYpLGSSWFpncY6lsLWFiupBBtLBRsfQcQ2a782PoCkSrONlUGy5LPYn6wbu4DghcOcYs65595hIpVNamsj9V8ajOeFzgsFLmo+LxTXcWJVX8WyppIgKSVPkQQ/F0u3gSFwBfTqdoPoBYDnxRFcDgA4Z4cbPtazqblZptBgxJ2BtGydv+vbkyahSUGC0zxT7VeZ0DguBXFsRs9AKtzq/amOKA2sTAylzMDKoIM6wfXhcWmcBKd51ukeWq8Qx6V0MmFAuppxdx/OIgB6e/32+SoTUGfdHTxy0CRodtF6jZpW2R2qs/alQNrgYTytR8Cf1Rh08VuNGkECJCtd5L//TN/BEWxoE8dlIQAAAABJRU5ErkJggg==" }
-    ]);
-
-    var terms = "rolling stones";
-    setTerms(terms);
-    add({ "name" : "Google", "type" : "suggest", "terms" : terms, "results" : [ { "title" : "rolling stones band" } ] });
-    add({ "name" : "Amazon", "type" : "suggest", "terms" : terms, "results" : [ { "title" : "rolling stones banditas" }, { "title" : "rolling stonsets" }, { "title" : "roling banditas" }   ] });
-    add({ "name" : "Yelp", "type" : "match", "terms" : terms, "results" : [ { "title" : "rolling stones", "url" : "http://www.yelp.com/rollingstones" } ] });
-    add({ "name" : "Twitter", "type" : "match", "terms" : terms, "results" : [ { "title" : "The Rolling Stones", "url" : "http://twitter.com/#!/rollingstones" } ] });
-    add({ "name" : "Wikipedia", "type" : "match", "terms" : terms, "results" : [ { "title" : "The Rolling Stones", "url" : "http://en.wikipedia.org/The_Rolling_Stones" } ] });
-  }
-
   $("ul").live("mouseover", function() {
     // clear out the initial selection
     $("ul").removeClass("selected");
@@ -264,7 +283,7 @@ $(document).ready(function () {
   });
 
   $(".result").live("click", function() {
-    self.port.emit("click", { url : $(this).attr("href"),
+    self.port.emit("click", { url : $(this).data("url"),
                               type : $(this).data("type"),
                               engine : $(this).data("engine"),
                               terms : $(this).data("terms") } );
