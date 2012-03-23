@@ -13,55 +13,82 @@ app.use(express.bodyParser());
 app.use(express.errorHandler({ showStack: true }));
 
 app.get('/', function(req, res){
-  res.render('index.ejs', { layout: false, engines : [
-        ['Google', 30],
-        ['Amazon', 13],
-        ['Bing', 12],
-        ['Yahoo', 7],
-        ['LinkedIn', 2]
-      ] });
+  res.render('index.ejs', { layout: false });
 });
+
+var engines = null;
+
+function processEngines() {
+  engines = {};
+  client.zrangebyscore("services", "-inf", "+inf", "WITHSCORES",
+                      function (err, ids) {
+                        console.log("err", err);
+                        console.log("ids", ids);
+                        var multi = client.multi();
+                        for(var i = 0; i < ids.length; i+=2) {
+                          console.log("for.ids[i]", ids[i]);
+                          multi.hgetall(ids[i]);
+                        }
+                        multi.exec(function (err, replies) {
+                          console.log("replies", replies);
+                          for(var i = 0; i < replies.length; i++) {
+                            var item = replies[i], id = ids[i*2], score = ids[i*2+1];
+                            console.log("for.item", item, score, engines);
+                            engines[id] = item;
+                            engines[id].score = score;
+                            engines[id].id = id;
+                          }
+                        });
+                      }
+  );
+}
+
+setInterval(processEngines, 5 * 1000);
+
+app.get('/data', function(req, res){
+  res.contentType('json');
+  console.log("engines", engines);
+  res.send({ "engines": engines });
+
+});
+
 
 app.post('/service', function(req, res, next){
-  console.log(req.body);
+  console.log(req.body.data);
 
-  client.zincrby("services", 1, req.body.url);
+  var data = JSON.parse(req.body.data);
 
-  client.hmset(req.body.url,
-              "name", req.body.name,
-              "icon", req.body.icon,
-              "suggest", req.body.suggest,
-              redis.print);
+  data.forEach(function (item) {
+    if (item.action == "add") {
+      client.zincrby("services", 1, item.url);
+  
+      client.hmset(item.url,
+                  "name", item.name,
+                  "icon", item.icon,
+                  "suggest", item.suggest,
+                  redis.print);
+  
+      client.zincrby("site" + item.url, 1, item.site, redis.print)
+    } else if (item.action == "use") {
+      likely = { url : "", suggestions : 0, sindex : 0, engines : 0, eindex : 0, category : "" }
+  
+      client.incr("suggestions");
+      client.zincrby("suggestions.byurl", 1, item.url);
+  
+      client.hmset(item.url,
+                  "name", item.name,
+                  "icon", item.icon,
+                  "suggest", item.suggest,
+                  redis.print);
+  
+      client.zincrby("site" + item.url, 1, item.site, redis.print)
+    }
 
-  client.hmset(req.body.url,
-              "name", req.body.name,
-              "icon", req.body.icon,
-              "suggest", req.body.suggest,
-              redis.print);
-
-
-  client.zincrby("site" + req.body.url, 1, req.body.site, redis.print)
-
-  res.send("");
-});
-
-app.post('/use', function(req, res, next){
-  console.log(req.body);
-
-  likely = { url : "", suggestions : 0, sindex : 0, engines : 0, eindex : 0, category : "" }
-
-  client.incr("suggestions");
-  client.zincrby("suggestions.byurl", 1, req.body.url);
-
-  client.hmset(req.body.url,
-              "name", req.body.name,
-              "icon", req.body.icon,
-              "suggest", req.body.suggest,
-              redis.print);
-
-  client.zincrby("site" + req.body.url, 1, req.body.site, redis.print)
+  });
 
   res.send("");
+
+  processEngines();
 });
 
 app.listen(8080);
