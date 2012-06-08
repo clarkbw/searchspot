@@ -1,0 +1,7 @@
+{
+  "name": "search-suggestions-statistics",
+  "dependencies": {
+    "express": ">=2.5.9",
+    "redis": ">=0.7.2"
+  }
+}

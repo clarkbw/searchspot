@@ -18,49 +18,66 @@
     // Set a callback to run when the Google Visualization API is loaded.
     google.setOnLoadCallback(drawChart);
 
+    var engines = null;
+    var titles = { "default"  : "Default Search Engines",
+                   "add"      : "Search Engines found in the wild",
+                   "update"   : "Most update search engine descriptions",
+                   "use"      : "Most Used Search Engines"
+                  };
+
     // Callback that creates and populates a data table,
     // instantiates the pie chart, passes in the data and
     // draws it.
     function drawChart() {
 
-      var jsonData = $.ajax({
-          url: "/data",
-          dataType:"json",
-          async: false
-          }).responseText;
+      // block on loading all the engines first
+      // TODO: don't do this :)
+      engines = JSON.parse($.ajax({
+        url: "/engines",
+        dataType:"json",
+        async: false
+      }).responseText).engines;
+      console.log("engines", engines);
 
-      var engines = JSON.parse(jsonData).engines;
-      console.log(engines);
-      var engineData = [];
-      for (var e in engines) {
-        engineData.push([engines[e].name, parseInt(engines[e].score)]);
-      }
-      console.log(engineData);
-      // Create the data table.
-      var data = new google.visualization.DataTable();
-      data.addColumn('string', 'Search Engine');
-      data.addColumn('number', 'Usage');
-      console.log(engineData.sort(function (a, b) { return a[1] < b[1];  }).slice(0,4))
-      data.addRows(engineData.sort(function (a, b) { return a[1] < b[1];  }).slice(0,4));
-
-      // Set chart options
-      var options = {'title':'Top 4 Search Engines',
-                     'is3D' : true,
-                     'width':480,
-                     'height':320
-                     };
-
-      // Instantiate and draw our chart, passing in some options.
-      var chart = new google.visualization.PieChart(document.getElementById('visualization'));
-      chart.draw(data, options);
-      
+      // just some useless pie charts to exemplify what is possible
+      ["default", "add", "update", "use"].forEach(function(action) {
+        $.ajax({
+            url: "/count/" + action,
+            dataType:"json",
+            async: true
+        }).done(function(data) {
+              var count = data.count;
+              var engineData = [];
+              count.forEach(function(e,i,a) {
+                //console.log(e, i);
+                if (i % 2 == 0) {
+                  var id = e, score = a[i+1];
+                  engineData.push([engines[id].name, parseInt(score)]);
+                }
+              })
+              //console.log(engineData);
+              // Create the data table.
+              var datatable = new google.visualization.DataTable();
+              datatable.addColumn('string',  titles[action]);
+              datatable.addColumn('number', action);
+              datatable.addRows(engineData.sort(function (a, b) { return a[1] < b[1];  }));
+              // Set chart options
+              var options = {'title': titles[action],
+                             'is3D' : true,
+                             'width': 480,
+                             'height':320
+                             };
+              // Instantiate and draw our chart, passing in some options.
+              var chart = new google.visualization.PieChart($("<div/>").attr("id", action + "-count").appendTo("#charts").get(0));
+              chart.draw(datatable, options);
+        });
+      });
     }
 
   </script>
 
 </head>
 <body>
-    <div id="chart_div"></div>
-    <div id="visualization" style="width: 900px; height: 500px;"></div>
+    <div id="charts"></div>
 </body>
 </html>
