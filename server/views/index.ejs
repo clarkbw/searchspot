@@ -10,6 +10,7 @@
   <!--Load the AJAX API-->
   <script type="text/javascript" src="https://www.google.com/jsapi"></script>
   <script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+  <script type="text/javascript" src="js/d3.v2.js"></script>
   <script type="text/javascript">
 
     // Load the Visualization API and the piechart package.
@@ -19,8 +20,8 @@
     google.setOnLoadCallback(drawChart);
 
     var engines = null;
-    var titles = { "default"  : "Default Search Engines",
-                   "add"      : "Search Engines found in the wild",
+    var titles = { "default"  : "The Default Installed Search Engines",
+                   "add"      : "Search Engines most commonly found in the wild",
                    "update"   : "Most update search engine descriptions",
                    "use"      : "Most Used Search Engines"
                   };
@@ -72,12 +73,33 @@
               chart.draw(datatable, options);
         });
       });
-    }
 
+      // just some useless pie charts to exemplify what is possible
+      ["use"].forEach(function(action) {
+        $.ajax({
+            url: "/time/" + action,
+            dataType:"json",
+            async: true
+        }).done(function(data) {
+              console.log("data", data);
+              var count = data.count;
+
+              count.forEach(function(e,i,a) {
+                //console.log(e, i);
+                if (i % 2 == 0) {
+                  var id = e, score = a[i+1];
+                }
+              });
+
+        });
+      });
+
+    }
   </script>
 
 </head>
 <body>
-    <div id="charts"></div>
+  <div id="chart"></div>
+  <div id="charts"></div>
 </body>
 </html>

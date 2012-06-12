@@ -4,6 +4,7 @@ var express = require('express'),
 
 app.use(express.bodyParser());
 app.use(express.errorHandler({ showStack: true }));
+app.use(express.static(__dirname + '/public'));
 
 app.get('/', function(req, res){
   res.render('index.ejs', { layout: false });
@@ -93,15 +94,19 @@ app.post('/service', function(req, res, next){
     console.log("action", JSON.stringify(item.action));
     console.log("data", JSON.stringify(item.data));
 
+    // Save this engine hash
     saveEngine(item.data);
 
+    // Add to complete list of IDs found
     client.sadd("engines:ids", item.data.id);
 
     client.zadd("engines:ids:" + item.action + ":by:time", timestamp, item.data.id);
     client.zincrby("engines:ids:" + item.action + ":count", 1, item.data.id);
+    client.incr("engines:ids:" + item.action + ":total");
 
     client.zadd("engines:sites:" + item.action + ":by:time", timestamp, item.data.siteURL);
     client.zincrby("engines:sites:" + item.action + ":count", 1, item.data.siteURL);
+    client.incr("engines:sites:" + item.action + ":total");
 
     if (item.data.suggestionURL !== "") {
       client.sadd("engines:ids:has:suggest", item.data.id);
@@ -157,6 +162,8 @@ function hasGeoLocalExt(data) {
   }
 */
 
+// This should really be saving different versions of the engine
+// but that's a lot of work
 function saveEngine(data) {
   client.hmset("engines:" + data.id,
               "id",   data.id,
@@ -167,8 +174,7 @@ function saveEngine(data) {
               "baseURL", data.baseURL,
               "queryURL", data.queryURL,
               "suggestionURL", data.suggestionURL,
-              "icon", data.icon,
-              redis.print);
+              "icon", data.icon);
 }
 
 var __port = process.env.VCAP_APP_PORT || 8080
