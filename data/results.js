@@ -30,7 +30,7 @@ function suggestions(engine, terms, results) {
     if (engine.type == "suggest") {
       suggest(id, item.title, terms);
     } else if (engine.type == "match") {
-      match(id, item.title, terms, engine.icon);
+      match(id, item.title, terms);
     }
 
   }
@@ -231,19 +231,13 @@ function _resetResult($item) {
 }
 
 // apply a match to the first unused node
-function match(id, title, terms, icon) {
+function match(id, title, terms) {
   var $match = $("#" + id).find(".result:not(.default):not(.match)").first();
 
   $match.addClass("match").
          data({ "type" : "match", "terms" : title }).
-         append($("<span class='terms'/>").html(highlight(title, terms)));
-
-  // History results will provide their own icon for the site itself
-  if (id == "history" && icon) {
-    $match.css({ "list-style-image" : "url('" + icon + "')" })
-  } else {
-    $match.css({ "list-style-image" : "url('" + $match.data("engine-icon") + "')" })
-  }
+         append($("<span class='terms'/>").html(highlight(title, terms))).
+         css({ "list-style-image" : "url('" + $match.data("engine-icon") + "')" });
 }
 
 // apply a suggestion to the first unused node
