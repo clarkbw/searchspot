@@ -18,7 +18,7 @@ function suggestions(engine, terms, results) {
   for (var i = 0; i < results.length; i++) {
     // Suggestion Result
     var item = results[i];
-    //console.log("suggestions", id, item.title, item.url, terms);
+    //console.log("suggestions", id, item.title, terms);
 
     // HTML Node for our result
     var $item = $("#"+id).children(":not(.default)").slice(i, i+1);
@@ -30,7 +30,7 @@ function suggestions(engine, terms, results) {
     if (engine.type == "suggest") {
       suggest(id, item.title, terms);
     } else if (engine.type == "match") {
-      match(id, item.title, item.url, terms, engine.icon);
+      match(id, item.title, terms, engine.icon);
     }
 
   }
@@ -231,11 +231,11 @@ function _resetResult($item) {
 }
 
 // apply a match to the first unused node
-function match(id, title, url, terms, icon) {
+function match(id, title, terms, icon) {
   var $match = $("#" + id).find(".result:not(.default):not(.match)").first();
 
   $match.addClass("match").
-         data({ "type" : "match", "terms" : title, "url" : url }).
+         data({ "type" : "match", "terms" : title }).
          append($("<span class='terms'/>").html(highlight(title, terms)));
 
   // History results will provide their own icon for the site itself
@@ -251,7 +251,7 @@ function suggest(id, title, terms) {
   var $suggest = $("#" + id).find(".result:not(.default):not(.suggest)").first();
 
   $suggest.addClass("suggest").
-           data({ "type" : "suggest", "terms" : title, "url" : "" }).
+           data({ "type" : "suggest", "terms" : title }).
            append($("<span class='terms'/>").html(highlight(title, terms)));
 }
 
@@ -283,8 +283,7 @@ $(document).ready(function () {
   });
 
   $(".result").live("click", function() {
-    self.port.emit("click", { url : $(this).data("url"),
-                              type : $(this).data("type"),
+    self.port.emit("click", { type : $(this).data("type"),
                               engine : $(this).data("engine"),
                               terms : $(this).data("terms") } );
     return false;
