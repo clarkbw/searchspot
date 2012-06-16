@@ -7,36 +7,24 @@
   <link href="../css/bootstrap.css" rel="stylesheet">
   <link href="../css/bootstrap-responsive.css" rel="stylesheet">
 
-  <script type="text/javascript" src="../js/jquery.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-transition.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-alert.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-modal.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-dropdown.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-scrollspy.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-tab.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-tooltip.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-popover.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-button.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-collapse.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-carousel.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-typeahead.js"></script>
+  <!--<script type="text/javascript" src="../js/jquery.js"></script>-->
+  <!--<script type="text/javascript" src="../js/jquery-ui-1.8.21.custom.min.js"></script>-->
+  <!--<script type="text/javascript" src="../js/bootstrap-transition.js"></script>-->
+  <!--<script type="text/javascript" src="../js/bootstrap-button.js"></script>-->
 
   <script type="text/javascript">
   // This is for debugging purposes, these <scripts> are ignored by the panel loader
-  if (!self.port) {
-    self.port = { on : function(signal, callback) { }, emit : function(signal, objects) {} };
-  }
+  //if (!self.port) {
+  //  self.port = { on : function(signal, callback) { }, emit : function(signal, objects) { console.log("emit", signal, objects); } };
+  //}
   </script>
+
   <!--<script type="text/javascript" src="preferences.js"></script>-->
 
   <style type="text/css">
-    .sections {
+    #content {
       position: relative;
       padding-top: 60px;
-    }
-    .nav > li,
-    .sections section h3 {
-      text-transform: capitalize;
     }
     .navbar .brand {
       float: right;
@@ -44,20 +32,26 @@
     section {
       margin: 40px 0;
     }
-    section h3 {
-      margin: 10px 0;
-    }
-    .btn {
-      margin-bottom: 10px;
-    }
     .engine {
-      background-position: center left;
-      background-repeat: no-repeat;
-      padding-left: 20px;
+      padding: 5px;
+      border-radius: 2px;
+      border: 1px solid #eee;
+      margin: 5px auto;
+      background-color: #fff;
+      text-align: right;
+    }
+    .icon {
+      margin: 5px;
+      vertical-align: middle;
+      cursor: move;
+    }
+    .name {
+      margin: 5px;
+      cursor: move;
     }
   </style>
 </head>
-<body data-spy="scroll" data-target=".nav">
+<body>
 
   <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
@@ -75,7 +69,25 @@
     </div>
   </div>
 
-  <div class="sections container"></div>
+  <div id="content" class="container">
+    <div class="row">
+      <div class="span6">
+        <div>
+          <h3>Searches you're using</h3>
+          <small>feel free to reorder these!</small>
+        </div>
+        <div class="defaults sections"></div>
+      </div>
+      <div class="span6">
+        <div>
+          <h5>Other Searches You Might Like</h5>
+          <small>these are other search engines that might be useful for you</small>
+        </div>
+        <div class="others sections"></div>
+      </div>
+    </div>
+  </div>
+
 
 </body>
 </html>
