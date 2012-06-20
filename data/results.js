@@ -3,6 +3,15 @@
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const MAX_RESULTS = 3;
+// hold our stats data, should be reset on setEngines
+var stats = {};
+
+function setStat(id, k, v) {
+  if (!stats[id]) {
+    stats[id] = {};
+  }
+  stats[id][k] = v;
+}
 
 self.port.on("suggestions", function(engine, terms, results) {
   //console.log("port.suggestions", engine, terms, results);
@@ -12,9 +21,11 @@ self.port.on("suggestions", function(engine, terms, results) {
 // Add the relevant results to this engine
 // An engine could already have old results listed so this must clear those out
 function suggestions(engine, terms, results) {
-  var id = _convertEngineName(engine.id);
+  var id = _convertEngineName(engine.id),
+      count = results.length;
 
-  for (var i = 0; i < results.length; i++) {
+  // look through the results but only until our max count
+  for (var i = 0; i < results.length && i < MAX_RESULTS; i++) {
     // Suggestion Result
     var item = results[i];
     //console.log("suggestions", id, item.title, terms);
@@ -26,8 +37,7 @@ function suggestions(engine, terms, results) {
     _fillResult($item, item.title, engine.type, terms);
   }
 
-  // count of results this time, we need to clean out other possibly old results
-  var count = results.length;
+  setStat(engine.id, "suggestions", Math.min(count, MAX_RESULTS));
 
   // Clean out old results from this engine
   while (count < MAX_RESULTS) {
@@ -61,7 +71,6 @@ self.port.on("setEngines", function(engines) {
  * Structure of the results
  *
  * <all-suggestions #results>
- *  <history type="matches" limit="1">
  *  <web type="suggestions" limit="3">
  *  <shopping type="suggestions" limit="3">
  *  <social type="suggestions" limit="3">
@@ -73,11 +82,14 @@ self.port.on("setEngines", function(engines) {
  */
 // Called only on initialization and when there are changes to the engines
 function setEngines(engines) {
+  stats = {};
   $("#results").empty();
 
   engines.forEach(function (engine, i, a) {
     var $engine = createEngine(engine);
     if ($engine) {
+      setStat(engine.id, "id", engine.id);
+      setStat(engine.id, "order", i);
       $("#results").append($engine);
     }
   });
@@ -118,9 +130,9 @@ function matchEngine (engine) {
                    .append(
                       $("<li/>").attr({ "class" : "result" }).
                                  css({ "list-style-image" : "url('" + engine.icon + "')" }).
-                                 data({ "type" : "match", "engine" : engine.id, "engine-icon" : engine.icon }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id })
+                                 data({ "type" : "match", "id" : engine.id, "engine-icon" : engine.icon, "index" : 1 }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 2 }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 3 })
                   );
 }
 
@@ -131,14 +143,14 @@ function suggestEngine (engine) {
                    .append(
                       $("<li/>").attr({ "class" : "result default" }).
                                  css({ "list-style-image" : "url('" + engine.icon + "')" }).
-                                 data({ "type" : "suggest", "engine" : engine.id }).
+                                 data({ "type" : "suggest", "id" : engine.id, "index" : 0 }).
                                  append(
                                     $("<span class='terms'/>"),
                                     $("<span class='search'/>").text(engine.name)
                                  ),
-                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "engine" : engine.id })
+                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 1 }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 2 }),
+                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 3 })
                   );
 }
 
@@ -202,15 +214,16 @@ function go() {
 // Highlight the text with the terms provided while preserving the case used
 // returns <strong>wrappers</strong> around the terms found in the text
 function highlight(text, terms) {
-  var index = text.toLowerCase().indexOf(terms.toLowerCase());
+  var index = text.toLowerCase().indexOf(terms.toLowerCase()),
+      pre, mid, post;
   // the terms could not exist in the text at all
   if (index < 0) {
     return text;
   }
-  var pre = text.substring(0, index);
-  var mid = text.substring(index, index + terms.length);
-  var post = text.substring(index + terms.length, text.length);
-  return [].concat(pre, "<strong>", mid, "</strong>", post).join("");
+  pre = text.substring(0, index);
+  mid = text.substring(index, index + terms.length);
+  post = text.substring(index + terms.length, text.length);
+  return [pre, "<strong>", mid, "</strong>", post].join("");
 }
 
 // remove any trace of match or suggestion from the result node
@@ -250,9 +263,12 @@ $(document).ready(function () {
   });
 
   $(".result").live("click", function() {
-    self.port.emit("click", { type : $(this).data("type"),
-                              engine : $(this).data("engine"),
-                              terms : $(this).data("terms") } );
+    var id = $(this).data("id");
+    setStat(id, "index",  $(this).data("index"))
+    self.port.emit("click", { "type" : $(this).data("type"),
+                              "id" : id,
+                              "terms" : $(this).data("terms"),
+                              "stats" : stats } );
     return false;
   });
 

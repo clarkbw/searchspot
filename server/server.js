@@ -88,51 +88,77 @@ app.post('/service', function(req, res, next){
   //console.dir(req.body.data);
 
   try {
-    var item = JSON.parse(decodeURIComponent(req.body.data));
+    var item = JSON.parse(decodeURIComponent(req.body.data)),
+        action = item.action,
+        data = item.data,
+        stats = data.stats;
     var timestamp = Date.now();
 
-    console.log("action", JSON.stringify(item.action));
-    console.log("data", JSON.stringify(item.data));
+    console.log("action", JSON.stringify(action));
+    console.log("data", JSON.stringify(data));
+    if (data) {
+      if (action == "use") {
+        data = data.engine;
 
-    // Save this engine hash
-    saveEngine(item.data);
+        // stats is an object of objects { id : { id: id, order : #, suggestions : #, index? : # }}
+        var count = 0;
+        for(var i in stats) {
+          console.log("stats", i, JSON.stringify(stats[i]));
+          var stat = stats[i];
+          count+= 1;
+          var likely = {"id":"http://www.linkedin.com/search/fpsearch","order":2,"suggestions":1,"index":0};
 
-    // Add to complete list of IDs found
-    client.sadd("engines:ids", item.data.id);
+          // most common position of engines by id
+          client.zadd("suggestions:ids:" + stat.order + ":order", 1, stat.id, reply);
 
-    client.zadd("engines:ids:" + item.action + ":by:time", timestamp, item.data.id);
-    client.zincrby("engines:ids:" + item.action + ":count", 1, item.data.id);
-    client.incr("engines:ids:" + item.action + ":total");
+          // avg number of suggestions across all engines
+          client.zadd("suggestions:number:of:suggestions", 1, stat.suggestions, reply);
 
-    client.zadd("engines:sites:" + item.action + ":by:time", timestamp, item.data.siteURL);
-    client.zincrby("engines:sites:" + item.action + ":count", 1, item.data.siteURL);
-    client.incr("engines:sites:" + item.action + ":total");
+          // avg number of suggestions per engine
+          client.zadd("suggestions:by:id:" + stat.id + ":count", 1, stat.suggestions, reply);
 
-    if (item.data.suggestionURL !== "") {
-      client.sadd("engines:ids:has:suggest", item.data.id);
+          if (stat.index) {
+            // most commonly used suggestion index
+            client.zadd("suggestions:index:of:suggestions", 1, stat.index, reply);
+
+            // most commonly used suggestion index by id
+            client.zadd("suggestions:by:id:" + stat.id + ":index", 1, stat.index, reply);
+          }
+        }
+        // add up the total number of suggestion engine being displayed
+        client.zadd("suggestions:number:of:engines", 1, count, reply);
+      }
+
+      // Save this engine hash
+      saveEngine(data);
+
+      // Add to complete list of IDs found
+      client.sadd("engines:ids", data.id, reply);
+
+      client.zadd("engines:ids:" + action + ":by:time", timestamp, data.id, reply);
+      client.zincrby("engines:ids:" + action + ":count", 1, data.id, reply);
+      client.incr("engines:ids:" + action + ":total", reply);
+
+      client.zadd("engines:sites:" + action + ":by:time", timestamp, data.siteURL, reply);
+      client.zincrby("engines:sites:" + action + ":count", 1, data.siteURL, reply);
+      client.incr("engines:sites:" + action + ":total", reply);
+
+      if (data.suggestionURL !== "") {
+        client.sadd("engines:ids:has:suggest", data.id, reply);
+      }
+
+      if (hasGeoLocalExt(data)) {
+        client.sadd("engines:ids:has:geo", data.id, reply);
+      }
+
+      res.send(JSON.stringify({ success : true }));
+    } else {
+      res.send(JSON.stringify({ success : false }));
     }
-
-    if (hasGeoLocalExt(item.data)) {
-      client.sadd("engines:ids:has:geo", item.data.id);
-    }
-
-    if (item.action == "add") {
-      console.log("add", item.data.id);
-    } else if (item.action == "update") {
-      console.log("update", item.data);
-    } else if (item.action == "default") {
-      console.log("default", item.data.id);
-    } else if (item.action == "use") {
-      console.log("use", item.data.id);
-      //likely = { url : "", suggestions : 0, sindex : 0, engines : 0, eindex : 0, category : "" }
-      // here we should also be recording how many suggestions and which one was used
-    }
-
-    res.send(JSON.stringify({ success : true }));
 
   } catch (e) {
     console.log("e", e);
-    console.log("req", req);
+    console.log(JSON.stringify(item));
     console.log("req.body", req.body);
     console.log("req.body.data", req.body.data);
     res.send(JSON.stringify({ success : false, error : e }));
@@ -165,16 +191,26 @@ function hasGeoLocalExt(data) {
 // This should really be saving different versions of the engine
 // but that's a lot of work
 function saveEngine(data) {
-  client.hmset("engines:" + data.id,
-              "id",   data.id,
-              "name", data.name,
-              "siteURL", data.siteURL,
-              "host", data.host,
-              "type", data.type,
-              "baseURL", data.baseURL,
-              "queryURL", data.queryURL,
-              "suggestionURL", data.suggestionURL,
-              "icon", data.icon);
+  if (data) {
+    client.hmset("engines:" + data.id,
+                "id",   data.id,
+                "name", data.name,
+                "siteURL", data.siteURL,
+                "host", data.host,
+                "type", data.type,
+                "baseURL", data.baseURL,
+                "queryURL", data.queryURL,
+                "suggestionURL", data.suggestionURL,
+                "icon", data.icon,
+                reply);
+  }
+}
+
+// default callback function for redis
+function reply(err, replies) {
+  if (err) {
+    console.error(err);
+  }
 }
 
 var __port = process.env.VCAP_APP_PORT || 8080
