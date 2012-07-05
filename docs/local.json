@@ -1,0 +1,14 @@
+{
+  "configs": {
+    "ffdev": ["-b", "/Applications/Mozilla/Firefox.app/Contents/MacOS/firefox",
+             "-p", "~/Library/Application Support/Firefox/Profiles/pjymmt6x.dev",
+             "--static-args", "{ \"dev\" : \"true\"}"],
+    "nightlydev": ["-b", "/Applications/Mozilla/Nightly.app/Contents/MacOS/firefox",
+                   "-p", "~/Library/Application Support/Firefox/Profiles/pjymmt6x.dev",
+                   "--static-args", "{ \"dev\" : \"true\"}"],
+    "ffnew": ["-b", "/Applications/Mozilla/Firefox.app/Contents/MacOS/firefox",
+             "--static-args", "{ \"dev\" : \"true\"}"],
+    "nightlynew": ["-b", "/Applications/Mozilla/Nightly.app/Contents/MacOS/firefox",
+                   "--static-args", "{ \"dev\" : \"true\"}"]
+  }
+}
