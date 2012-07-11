@@ -5,5 +5,8 @@
     "license": "MPL 2.0",
     "author": "Bryan Clark (http://clarkbw.net/) <clarkbw@gmail.com>",
     "version": "0.41",
+    "contributors" : [
+        "James Burke"
+    ],
     "id": "jid1-wB2HoBahvZDBDQ"
 }
