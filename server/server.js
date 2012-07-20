@@ -1,87 +1,112 @@
-var client = require("./redis-vcap").client;
+var mongodb_url = require("./mongodb-vcap").mongodb_url,
+    mongoose = require('mongoose'),
+    moment = require("moment"),
+    SearchEngine = require('./models/searchengine')(mongoose),
+    SearchUsage = require('./models/searchusage')(mongoose, SearchEngine);
+
+mongoose.connect(mongodb_url);
+
 var express = require('express'),
     app = express.createServer();
 
-app.use(express.bodyParser());
-app.use(express.errorHandler({ showStack: true }));
-app.use(express.static(__dirname + '/public'));
+app.configure(function() {
+  app.use(express.bodyParser());
+  //app.use(express.logger());
+  app.set('view engine', 'ejs');
+  app.set("view options", { layout: false });
+  app.set("port", process.env.VCAP_APP_PORT || 8080);
+});
+
+// set this with NODE_ENV="development"
+app.configure('development', function(){
+    app.use(express.static(__dirname + '/public'));
+    app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
+});
+
+// set this with NODE_ENV="production" or vmc env-add appname NODE_ENV="production"
+app.configure('production', function(){
+  app.use(express.static(__dirname + '/public', { maxAge: ONE_YEAR }));
+  app.use(express.errorHandler());
+});
 
 app.get('/', function(req, res){
-  res.render('index.ejs', { layout: false });
+  res.render('index.ejs');
 });
 
+app.get('/engine/id/:id', function(req, res){
+  res.contentType('json');
+  var id = req.param("id");
+  if (id) {
+    SearchEngine.findOne({ "_id" : id }).sort("used_count", -1).exec(function(err, docs) {
+    res.json(docs);
+    });
+  }
+});
+
+// looks for an array of comma separated ids 
+app.get('/engine/ids/:ids', function(req, res){
+  res.contentType('json');
+  var ids = req.param("ids").split(",");
+  if (ids) {
+    var or = ids.map(function(id) { return { _id : id }; });
+    SearchEngine.find({}).or(or).exec(function(err, docs) {
+    res.json(docs);
+    });
+  }
+});
+
+app.get('/engine/url/:url', function(req, res){
+  res.contentType('json');
+  var url = req.param("url");
+  if (url) {
+    SearchEngine.find({ "url" : url }).sort("used_count", -1).exec(function(err, docs) {
+    res.json(docs);
+    });
+  }
+});
+
+/**
+ * Sends pushes out all engines, this will get expensive as the number of engines
+ * increases.  It's unlikely we'll keep this call around
+ * @returns {Object} engines : {Array} of engines, success : true
+ */
 app.get('/engines', function(req, res){
   res.contentType('json');
-
-  client.sort("engines:ids",
-              "by", "nosort",
-              "get", "engines:*->id",
-              "get", "engines:*->name",
-              "get", "engines:*->siteURL",
-              "get", "engines:*->host",
-              "get", "engines:*->type",
-              "get", "engines:*->baseURL",
-              "get", "engines:*->queryURL",
-              "get", "engines:*->suggestionURL",
-              "get", "engines:*->icon",
-              function(err, obj) {
-                var engines = {};
-                for (var i = 0; obj && i < obj.length; i += 9) {
-                  var id = obj[i],
-                      name = obj[i+1],
-                      siteURL = obj[i+2],
-                      host = obj[i+3],
-                      type = obj[i+4],
-                      baseURL = obj[i+5],
-                      queryURL = obj[i+6],
-                      suggestionURL = obj[i+7],
-                      icon = obj[i+8];
-                  //console.log(name, siteURL, host, type, baseURL, queryURL, suggestionURL, icon);
-                  engines[id] = { "id": id, "name" : name,
-                                  "siteURL" : siteURL, "host" : host,
-                                  "type" : type, "baseURL" : baseURL,
-                                  "queryURL" : queryURL, "suggestionURL" : suggestionURL,
-                                  "icon" : icon };
-                }
-                res.send({ "engines": engines });
-              }
-  );
+  SearchEngine.find({}).sort("used_count", -1).exec(function(err, docs) {
+    //console.log("err", err);
+    //console.log("docs", docs);
+    res.json(docs);
+  });
 });
 
-app.get('/count/:action', function(req, res){
+app.get('/engines/https', function(req, res){
   res.contentType('json');
-  var action = req.param("action");
-  if (action) {
-    client.zrange("engines:ids:" + action + ":count", 0, -1, "WITHSCORES",
-                  function(err, idswithscores) {
-                    if (idswithscores) {
-                      res.send({ "success" : true, "count" : idswithscores, "action" : action });
-                    } else {
-                      res.send({ "success" : false, "error" : err });
-                    }
-                  }
-    );
-  } else {
-    res.send({ "success" : false, "error" : "NO_ACTION" });
-  }
+  SearchEngine.findHttps(function(err, docs) {
+    //console.log("err", err);
+    //console.log("docs", docs);
+    res.json(docs);
+  });
 });
 
-app.get('/time/:action', function(req, res){
+app.get('/engines/geo', function(req, res){
   res.contentType('json');
-  var action = req.param("action");
-  if (action) {
-    client.zrange("engines:ids:" + action + ":by:time", 0, -1, "WITHSCORES",
-                  function(err, idswithscores) {
-                    if (idswithscores) {
-                      res.send({ "success" : true, "count" : idswithscores, "action" : action });
-                    } else {
-                      res.send({ "success" : false, "error" : err });
-                    }
-                  }
-    );
-  } else {
-    res.send({ "success" : false, "error" : "NO_ACTION" });
-  }
+  SearchEngine.findGeoLocation(function(err, docs) {
+    //console.log("err", err);
+    //console.log("docs", docs);
+    res.json(docs);
+  });
+});
+
+app.get('/usage', function(req, res){
+  res.contentType('json');
+  // we could also send down all the engines related
+  //  SearchUsage.find({}).populate('engine').exec(function(err, docs) {
+  var start = moment().subtract('days', 7), end = new Date();
+  SearchUsage.find({ "added" : { $gte : start, $lte : end } }).exec(function(err, docs) {
+    //console.log("err", err);
+    console.log("docs", docs.length);
+    res.json(docs);
+  });
 });
 
 app.post('/service', function(req, res, next){
@@ -94,8 +119,8 @@ app.post('/service', function(req, res, next){
         stats = data.stats;
     var timestamp = Date.now();
 
-    console.log("action", JSON.stringify(action));
-    console.log("data", JSON.stringify(data));
+    //console.log("action", JSON.stringify(action));
+    //console.log("data", JSON.stringify(data));
     if (data) {
       if (action == "use") {
         data = data.engine;
@@ -103,53 +128,27 @@ app.post('/service', function(req, res, next){
         // stats is an object of objects { id : { id: id, order : #, suggestions : #, index? : # }}
         var count = 0;
         for(var i in stats) {
-          console.log("stats", i, JSON.stringify(stats[i]));
+          //console.log("stats", i, JSON.stringify(stats[i]));
           var stat = stats[i];
           count+= 1;
-          var likely = {"id":"http://www.linkedin.com/search/fpsearch","order":2,"suggestions":1,"index":0};
-
-          // most common position of engines by id
-          client.zadd("suggestions:ids:" + stat.order + ":order", 1, stat.id, reply);
-
-          // avg number of suggestions across all engines
-          client.zadd("suggestions:number:of:suggestions", 1, stat.suggestions, reply);
-
-          // avg number of suggestions per engine
-          client.zadd("suggestions:by:id:" + stat.id + ":count", 1, stat.suggestions, reply);
-
-          if (stat.index) {
-            // most commonly used suggestion index
-            client.zadd("suggestions:index:of:suggestions", 1, stat.index, reply);
-
-            // most commonly used suggestion index by id
-            client.zadd("suggestions:by:id:" + stat.id + ":index", 1, stat.index, reply);
-          }
+          //var likely = {"id":"http://www.linkedin.com/search/fpsearch","order":2,"suggestions":1,"index":0};
+          SearchUsage.create(stat, function(err, usage) {
+            //console.log("SearchUsage.err", err);
+            //console.log("SearchUsage.usage", usage);
+          });
         }
-        // add up the total number of suggestion engine being displayed
-        client.zadd("suggestions:number:of:engines", 1, count, reply);
       }
 
-      // Save this engine hash
-      saveEngine(data);
-
-      // Add to complete list of IDs found
-      client.sadd("engines:ids", data.id, reply);
-
-      client.zadd("engines:ids:" + action + ":by:time", timestamp, data.id, reply);
-      client.zincrby("engines:ids:" + action + ":count", 1, data.id, reply);
-      client.incr("engines:ids:" + action + ":total", reply);
-
-      client.zadd("engines:sites:" + action + ":by:time", timestamp, data.siteURL, reply);
-      client.zincrby("engines:sites:" + action + ":count", 1, data.siteURL, reply);
-      client.incr("engines:sites:" + action + ":total", reply);
-
-      if (data.suggestionURL !== "") {
-        client.sadd("engines:ids:has:suggest", data.id, reply);
-      }
-
-      if (hasGeoLocalExt(data)) {
-        client.sadd("engines:ids:has:geo", data.id, reply);
-      }
+      SearchEngine.findOrCreate(data, function(err, engine) {
+        //console.log("SearchEngine.err", err);
+        //console.log("SearchEngine.engine", engine);
+        if (action == "use") {
+          engine.used_count.$inc();
+          engine.save();
+          //Model = mongoose.model('SearchEngine', SearchEngine);
+          //Model.update({ _id : obj._id }, { $inc : { used_count : 1 } });
+        }
+      });
 
       res.send(JSON.stringify({ success : true }));
     } else {
@@ -166,53 +165,6 @@ app.post('/service', function(req, res, next){
 
 });
 
-// This does a quick regex through the query URL used in a search engine
-// to see if it conforms to the Geo Location Extension spec as proposed here
-// https://github.com/clarkbw/searchspot/wiki/Modern-Open-Search
-function hasGeoLocalExt(data) {
-  var reg = /{geo:/g;
-  return reg.test(data.queryURL) || reg.test(data.suggestionURL);
-}
 
-/*
-  {  // SEARCH ENGINE EXAMPLE
-    id : "http://example.com/opensearch.xml",
-    name : "Example Search",
-    siteURL : "http://example.com/index.html",
-    host : "http://example.com/",
-    type : "suggest",  <-- legacy
-    baseURL : "", <-- legacy
-    queryURL: "http://example.com/search?q={searchTerms}&geo={geo:name}",
-    suggestionURL : "http://example.com/suggestions?q={searchTerms}&geo={geo:name}",
-    icon : "http://example.com/favicon.ico"
-  }
-*/
-
-// This should really be saving different versions of the engine
-// but that's a lot of work
-function saveEngine(data) {
-  if (data) {
-    client.hmset("engines:" + data.id,
-                "id",   data.id,
-                "name", data.name,
-                "siteURL", data.siteURL,
-                "host", data.host,
-                "type", data.type,
-                "baseURL", data.baseURL,
-                "queryURL", data.queryURL,
-                "suggestionURL", data.suggestionURL,
-                "icon", data.icon,
-                reply);
-  }
-}
-
-// default callback function for redis
-function reply(err, replies) {
-  if (err) {
-    console.error(err);
-  }
-}
-
-var __port = process.env.VCAP_APP_PORT || 8080
-console.log("listening on http://" + require("os").hostname() + ":" + __port + "/");
-app.listen(__port);
+app.listen(app.settings.port);
+console.log("listening on http://" + app.address().address + ":" + app.address().port);

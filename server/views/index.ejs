@@ -7,99 +7,185 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-  <!--Load the AJAX API-->
-  <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-  <script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/underscore.js"></script>
   <script type="text/javascript" src="js/d3.v2.js"></script>
   <script type="text/javascript">
 
-    // Load the Visualization API and the piechart package.
-    google.load('visualization', '1.0', {'packages':['corechart']});
-
-    // Set a callback to run when the Google Visualization API is loaded.
-    google.setOnLoadCallback(drawChart);
-
-    var engines = null;
     var titles = { "default"  : "The Default Installed Search Engines",
                    "add"      : "Search Engines most commonly found in the wild",
                    "update"   : "Most update search engine descriptions",
                    "use"      : "Most Used Search Engines"
                   };
+    var tmp = JSON.parse($.ajax({
+      url: "/engines",
+      dataType:"json",
+      async: false
+    }).responseText);
 
-    // Callback that creates and populates a data table,
-    // instantiates the pie chart, passes in the data and
-    // draws it.
+    $(document).ready(drawChart);
+
+
     function drawChart() {
 
-      // block on loading all the engines first
-      // TODO: don't do this :)
-      engines = JSON.parse($.ajax({
-        url: "/engines",
-        dataType:"json",
-        async: false
-      }).responseText).engines;
-      console.log("engines", engines);
+    var median_used_count = d3.median(tmp, function(d) { return d.used_count; });
 
-      // just some useless pie charts to exemplify what is possible
-      ["default", "add", "update", "use"].forEach(function(action) {
-        $.ajax({
-            url: "/count/" + action,
-            dataType:"json",
-            async: true
-        }).done(function(data) {
-              var count = data.count;
-              var engineData = [];
-              count.forEach(function(e,i,a) {
-                //console.log(e, i);
-                if (i % 2 == 0) {
-                  var id = e, score = a[i+1];
-                  engineData.push([engines[id].name, parseInt(score)]);
-                }
-              })
-              //console.log(engineData);
-              // Create the data table.
-              var datatable = new google.visualization.DataTable();
-              datatable.addColumn('string',  titles[action]);
-              datatable.addColumn('number', action);
-              datatable.addRows(engineData.sort(function (a, b) { return a[1] < b[1];  }));
-              // Set chart options
-              var options = {'title': titles[action],
-                             'is3D' : true,
-                             'width': 480,
-                             'height':320
-                             };
-              // Instantiate and draw our chart, passing in some options.
-              var chart = new google.visualization.PieChart($("<div/>").attr("id", action + "-count").appendTo("#charts").get(0));
-              chart.draw(datatable, options);
+var w = 400,
+    h = 400,
+    relevant_data = d3.split(tmp, function(d) { return d.used_count < median_used_count; })[0],
+    r = Math.min(w, h) / 2,
+    labelr = r * .7, // radius for label anchor
+    color = d3.scale.category20(),
+    donut = d3.layout.pie(),
+    arc = d3.svg.arc().innerRadius(r * .2).outerRadius(r * .6);
+
+var vis = d3.select("body")
+    .append("svg:svg")
+    .data([relevant_data])
+    .attr("width", w + labelr)
+    .attr("height", h);
+
+var arcs = vis.selectAll("g.arc")
+    .data(donut.value(function(d) { return d.used_count }))
+    .enter().append("svg:g")
+    .attr("class", "arc")
+    .attr("transform", "translate(" + (r + 30) + "," + r + ")");
+
+arcs.append("svg:path")
+    .attr("fill", function(d, i) { return color(i); })
+    .attr("d", arc);
+
+arcs.append("svg:text")
+    .attr("transform", function(d) {
+        var c = arc.centroid(d),
+            x = c[0],
+            y = c[1],
+            // pythagorean theorem for hypotenuse
+            h = Math.sqrt(x*x + y*y);
+        return "translate(" + (x/h * labelr) +  ',' +
+           (y/h * labelr) +  ")";
+    })
+    .attr("dy", ".35em")
+    .attr("text-anchor", function(d) {
+        // are we past the center?
+        return (d.endAngle + d.startAngle)/2 > Math.PI ?
+            "end" : "start";
+    })
+    .text(function(d, i) { if (d.data.used_count <= median_used_count) { return ""; } return d.data.name + ((/^https/.test(d.data.queryURL))? " [https]" : ""); });
+
+      $.ajax({
+          url: "/usage",
+          dataType:"json",
+          async: true
+      }).done(function(dataset) {
+
+        dataset.forEach(function(d) {
+          d.added = new Date(d.added);
         });
+
+        var color = d3.scale.category20c(),
+            padding = 20,
+            w = 700,
+            h = 400;
+
+        var data = d3.nest()
+            .key(function(d) { return d.engine; })
+            .key(function(d) { return d3.time.day(d.added); })
+            .entries(dataset);
+
+        var daydomain = [
+                      d3.min(data, function(d) { return d3.min(d.values, function(d) { return d3.time.day(new Date(d.key)); }) }),
+                      d3.max(data, function(d) { return d3.max(d.values, function(d) { return d3.time.day(new Date(d.key)); }) })
+                        ];
+
+        var xScale = d3.time.scale()
+                      .domain(daydomain)
+                      .range([padding, w - padding]);
+
+        var yScale = d3.scale.linear()
+                             .domain([0, d3.max(data, function(d) { return d3.max(d.values, function(d) { return d.values.length; }); })])
+                             .range([h - padding, padding]);
+
+        var xAxis = d3.svg.axis()
+                          .scale(xScale)
+                          .orient("bottom");
+
+        var svg = d3.select("body")
+            .append("svg:svg")
+            //.style("background-color", "yellow")
+            .attr("width", w)
+            .attr("height", h);
+
+        var layers = svg.selectAll("g.layer")
+            .data(data)
+            .enter().append("g")
+            .style("fill", function(d, i) { return color(i); })
+            .attr("width", w)
+            .attr("class", "layer");
+
+        var bars = layers.selectAll("g.bar")
+            .data(function(d) { return d.values; })
+            .enter().append("g")
+            .attr("class", "bar")
+            .attr("transform", function(d) { return "translate(" + (xScale(new Date(d.key)) - padding) + ",0)"; });
+
+        bars.append("rect")
+            .attr("width", w / xScale(new Date(daydomain[0])))
+            .attr("y", function(d) {
+                return h - padding - yScale(d.values.length);
+             })
+            .attr("height", h)
+          .transition()
+            .delay(function(d, i) { return i * 10; })
+            .attr("height", function(d) { return yScale(d.values.length); });
+
+        svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (h - padding) + ")")
+            .call(xAxis);
+
       });
-
-      // just some useless pie charts to exemplify what is possible
-      ["use"].forEach(function(action) {
-        $.ajax({
-            url: "/time/" + action,
-            dataType:"json",
-            async: true
-        }).done(function(data) {
-              console.log("data", data);
-              var count = data.count;
-
-              count.forEach(function(e,i,a) {
-                //console.log(e, i);
-                if (i % 2 == 0) {
-                  var id = e, score = a[i+1];
-                }
-              });
-
-        });
-      });
-
     }
+
+
   </script>
 
+  <style type="text/css">
+    #chart {
+      font: 10px sans-serif;
+      margin: 50px;
+    }
+    svg {
+      font: 10px sans-serif;
+    }
+
+    text.title {
+      font: 300 78px Helvetica Neue;
+      fill: #666;
+    }
+
+    rect {
+      fill-opacity: .2;
+      fill: #e377c2;
+    }
+
+    rect:first-child {
+      fill: #1f77b4;
+    }
+    .axis path,
+    .axis line {
+      fill: none;
+      stroke: black;
+      shape-rendering: crispEdges;
+    }
+
+    .axis text {
+      font-family: sans-serif;
+      font-size: 11px;
+    }
+  </style>
 </head>
 <body>
   <div id="chart"></div>
-  <div id="charts"></div>
 </body>
 </html>
