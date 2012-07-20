@@ -34,7 +34,7 @@ function suggestions(engine, terms, results) {
     var $item = $("#"+id).children(":not(.default)").slice(i, i+1);
 
     // overwrite the contents with the new suggestion results
-    _fillResult($item, item.title, engine.type, terms);
+    _fillResult($item, item.title, terms);
   }
 
   setStat(engine.id, "suggestions", Math.min(count, MAX_RESULTS));
@@ -71,11 +71,11 @@ self.port.on("setEngines", function(engines) {
  * Structure of the results
  *
  * <all-suggestions #results>
- *  <web type="suggestions" limit="3">
- *  <shopping type="suggestions" limit="3">
- *  <social type="suggestions" limit="3">
- *  <restaurants type="suggestions" limit="3">
- *  <reference type="matches" limit="3">
+ *  <web limit="3">
+ *  <shopping limit="3">
+ *  <social limit="3">
+ *  <local limit="3">
+ *  <reference limit="3">
  *  <preferences>
  * </all-suggestions>
  *
@@ -113,38 +113,13 @@ function resizePanel () {
 }
 
 function createEngine (engine) {
-  if (engine.type == "suggest") {
-    return suggestEngine(engine);
-  } else if (engine.type == "match") {
-    return matchEngine(engine);
-  }
-  console.error("createEngine", engine.id, engine.type, engine);
-  return null;
-}
-
-// This is different from the suggest engine because it doesn't have a default
-// search action, instead it always has an exact match
-function matchEngine (engine) {
-  var id = _convertEngineName(engine.id);
-  //console.log("matchEngine", id, engine, engine.name, engine.id);
-  return $("<ul/>").attr({ "id" : id, "class" : "engine" })
-                   .append(
-                      $("<li/>").attr({ "class" : "result" }).
-                                 css({ "list-style-image" : "url('" + engine.icon + "')" }).
-                                 data({ "type" : "match", "id" : engine.id, "engine-icon" : engine.icon, "index" : 1 }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 2 }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 3 })
-                  );
-}
-
-function suggestEngine (engine) {
   var id = _convertEngineName(engine.id);
   //console.log("suggestEngine", id, engine, engine.name, engine.id);
   return $("<ul/>").attr({ "id" : id, "class" : "engine" })
                    .append(
                       $("<li/>").attr({ "class" : "result default" }).
                                  css({ "list-style-image" : "url('" + engine.icon + "')" }).
-                                 data({ "type" : "suggest", "id" : engine.id, "index" : 0 }).
+                                 data({ "id" : engine.id, "index" : 0 }).
                                  append(
                                     $("<span class='terms'/>"),
                                     $("<span class='search'/>").text(engine.name)
@@ -227,13 +202,13 @@ function highlight(text, terms) {
   return [pre, "<strong>", mid, "</strong>", post].join("");
 }
 
-// remove any trace of match or suggestion from the result node
+// remove any terms from the result node
 function _resetResult($item) {
   jQuery.removeData($item.empty(), "terms");
 }
 
-function _fillResult($result, title, type, terms) {
-  $result.data({ "type" : type, "terms" : title }).
+function _fillResult($result, title, terms) {
+  $result.data({ "terms" : title }).
           html($("<span class='terms'/>").html(highlight(title, terms)));
 }
 
@@ -266,8 +241,7 @@ $(document).ready(function () {
   $(".result").live("click", function() {
     var id = $(this).data("id");
     setStat(id, "index",  $(this).data("index"))
-    self.port.emit("click", { "type" : $(this).data("type"),
-                              "id" : id,
+    self.port.emit("click", { "id" : id,
                               "terms" : $(this).data("terms"),
                               "stats" : stats } );
     return false;
