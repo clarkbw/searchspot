@@ -88,6 +88,7 @@ function setEngines(engines) {
   engines.forEach(function (engine, i, a) {
     var $engine = createEngine(engine);
     if ($engine) {
+      setStat(engine.id, "engine", engine);
       setStat(engine.id, "id", engine.id);
       setStat(engine.id, "order", i);
       $("#results").append($engine);
