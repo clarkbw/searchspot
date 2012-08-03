@@ -6,28 +6,15 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <script type="text/javascript" src="js/jquery.js"></script>
-  <script type="text/javascript">
-  // This is for debugging purposes, these <scripts> are ignored by the panel loader
-  if (!self.port) {
-    self.port = { on : function(signal, callback) { }, emit : function(signal, objects) {}  };
-  }
-  </script>
-  <script type="text/javascript" src="permission.js"></script>
 
   <title>searchspot permission</title>
 
+  <link rel="stylesheet" type="text/css" media="all" href="css/common.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
   <style>
-    * {
-        margin: 0;
-        padding: 0;
-        -moz-box-sizing: border-box;
-    }
     body {
-      font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif;
-      font-size: 14px;
-      color: #222;
-      background-color: #FFF9DC;
+      background-color: rgb(245,241,232);
       overflow: hidden;
       width: 500px;
       height: 240px;
@@ -36,74 +23,85 @@
       line-height: 21px;
       margin: 10px;
     }
-    ul {
-      margin: 20px 10px;
-      list-style: none;
-    }
-    li {
-      margin: 5px 0;
-    }
     button {
+      font: 14px/24px "OpenSans-Reg", "Lucida Sans", "Lucida Grande", "Lucida Sans Unicode", Verdana, sans-serif;
       margin: 10px;
       position: relative;
       overflow: visible;
       display: inline-block;
       padding: 1em 2em;
-      border: 1px solid #d4d4d4;
+      border: none;
       text-decoration: none;
-      text-shadow: 1px 1px 0 #fff;
       white-space: nowrap;
       cursor: pointer;
       outline: none;
       background-color: #ececec;
-      background-image: -moz-linear-gradient(#f4f4f4, #ececec);
-      background-image: linear-gradient(#f4f4f4, #ececec);
+      background-image: -moz-linear-gradient(#f4f4f4, #bcbcbc);
+      background-image: linear-gradient(#f4f4f4, #bcbcbc);
       -moz-background-clip: padding;
       background-clip: padding-box;
-      -moz-border-radius: 0.2em;
-      border-radius: 0.2em;
+      -moz-border-radius: 0.25em;
+      border-radius: 0.25em;
     }
-    
-    #ok:hover,
-    #ok:focus,
+
+    #ok,
+    #ok:focus {
+      font-weight: bold;
+      border-bottom: none;
+      text-decoration: none;
+      text-shadow: 0px 1px 0px rgba(0,0,0,0.25);
+      color: #fff;
+      background-color: #81BC2E; 
+      background-image: -moz-linear-gradient(top, #81BC2E 0%, #659C28 100%);
+      background-image: linear-gradient(top, #81BC2E 0%, #659C28 100%);
+
+      -moz-transition-property: -moz-box-shadow, box-shadow;  
+      -moz-transition-duration: 0.25s;  
+      -moz-transition-delay: 0s;
+
+      transition-property: -moz-box-shadow, box-shadow;  
+      transition-duration: 0.25s;  
+      transition-delay: 0s;
+    }
+
+    #ok:hover {
+      -moz-box-shadow: 0px 2px 0px 0px rgba(0, 0, 0, 0.1), inset 0px -2px 0px 0px rgba(0, 0, 0, 0.2), inset 0px 12px 24px 2px rgba(124,211,30,1);
+      box-shadow: 0px 2px 0px 0px rgba(0, 0, 0, 0.1), inset 0px -2px 0px 0px rgba(0, 0, 0, 0.2), inset 0px 12px 24px 2px rgba(124,211,30,1); 
+
+      -moz-transition-property: -moz-box-shadow, box-shadow;  
+      -moz-transition-duration: 0.25s;  
+      -moz-transition-delay: 0s;
+ 
+      transition-property: -moz-box-shadow, box-shadow;  
+      transition-duration: 0.25s;  
+      transition-delay: 0s;
+    }
+
     #ok:active,
     #ok.active {
-      border-color: #3072b3;
-      border-bottom-color: #2a65a0;
-      text-decoration: none;
-      text-shadow: -1px -1px 0 rgba(0,0,0,0.3);
-      color: #fff;
-      background-color: #3C8DDE;
-      background-image: -moz-linear-gradient(#599bdc, #3072b3);
-      background-image: linear-gradient(#599bdc, #3072b3);
+      -moz-box-shadow: inset 0px 2px 0px 0px rgba(0, 0, 0, 0.2), inset 0px 12px 24px 6px rgba(0,0,0,0.2), inset 0px 0px 2px 2px rgba(0,0,0,0.2);
+      box-shadow: inset 0px 2px 0px 0px rgba(0, 0, 0, 0.2), inset 0px 12px 24px 6px rgba(0,0,0,0.2), inset 0px 0px 2px 2px rgba(0,0,0,0.2); 
+
+      -moz-transition-property: -moz-box-shadow, -webkit-box-shadow, box-shadow;  
+      -moz-transition-duration: 0.25s;  
+      -moz-transition-delay: 0s;
+
+      transition-property: -moz-box-shadow, box-shadow;  
+      transition-duration: 0.25s;  
+      transition-delay: 0s;
     }
-    
-    button:active,
-    button.active {
-      border-color: #2a65a0;
-      border-bottom-color: #3884CF;
-      background-color: #3072b3;
-      background-image: -moz-linear-gradient(#3072b3, #599bdc);
-      background-image: linear-gradient(#3072b3, #599bdc);
-    }
-    
+
     /* overrides extra padding on button elements in Firefox */
     button::-moz-focus-inner {
       padding: 0;
       border: 0;
     }
 
-    #ok {
-      font-weight: bold;
-      background-color: #eee;
-      background-image: -moz-linear-gradient(#eee, #ddd);
-      background-image: linear-gradient(#f4f4f4, #ececec);
-    }
-
     #not {
       opacity: 0.7;
     }
 
+    #not,
     #not:hover,
     #not:focus,
     #not:active {
@@ -117,6 +115,7 @@
       background-image: -moz-linear-gradient(#dc5f59, #b33630);
       background-image: linear-gradient(#dc5f59, #b33630);
     }
+
     #not:active,
     #not.active {
       border-color: #a0302a;
@@ -139,11 +138,8 @@
 </head>
 <body>
   <div>
-    <p><strong>Sorry for the interuption!</strong>  You need understand the following are required</p>
-    <ul>
-      <li><strong>Current Location</strong>: shared with certain search services for better results</li>
-      <li><strong>Usage Patterns</strong>: sent to Mozilla to help us improve your searching</li>
-    </ul>
+    <h1>Welcome!</h1>
+    <p>I want you to be aware that <strong>Anonymous Usage Patterns</strong> are sent to back to me to help improve future versions of this add-on. See <strong>Preferences</strong></p>
     <div style="text-align: center;">
     <button id="ok">That's fine, lets try this!</button>  <button id="not">Not cool, I'm outa here</button>
     </div>
