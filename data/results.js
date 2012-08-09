@@ -104,7 +104,7 @@ function setEngines(engines) {
 
 function selectFirst () {
   // set the initial selection class so we have a default option selected
-  $("ul:visible:first, .result:visible:first").trigger("mouseover");
+  $("ul:visible:first, .result:visible:first").trigger("mouseenter");
 }
 
 function resizePanel () {
@@ -150,13 +150,13 @@ self.port.on("next", function() {
 function next() {
   var result = $(".result.selected").next(":visible");
    if (result.length > 0) {
-    result.trigger("mouseover");
+    result.trigger("mouseenter");
     return;
   }
   // Then try the previous UL with an LI
   result = $(".result.selected").parent().next().find(":visible").first();
   if (result.length > 0) {
-    result.trigger("mouseover");
+    result.trigger("mouseenter");
     return;
   }
 }
@@ -168,13 +168,13 @@ self.port.on("previous", function() {
 function previous() {
   var result = $(".result.selected").prev(":visible");
   if (result.length > 0) {
-    result.trigger("mouseover");
+    result.trigger("mouseenter");
     return;
   }
   // Then try the previous UL with an LI
   result = $(".result.selected").parent().prev().find(":visible").last();
   if (result.length > 0) {
-    result.trigger("mouseover");
+    result.trigger("mouseenter");
     return;
   }
 }
@@ -226,16 +226,23 @@ function _convertTitle(title) {
 
 $(document).ready(function () {
 
-  $("ul").live("mouseover", function() {
-    // clear out the initial selection
+  $("ul").live("mouseenter", function() {
     $("ul").removeClass("selected");
     $(this).addClass("selected");
   });
 
-  $(".result").live("mouseover", function() {
-    // clear out the initial selection
+  $("ul").live("mouseleave", function() {
+    $(this).removeClass("selected");
+  });
+
+  $(".result").live("mouseenter", function() {
+    // remove all other possibly selected results
     $(".result").removeClass("selected");
-    $(this).addClass("selected");
+    $(this).addClass("selected").parent().trigger("mouseenter");
+  });
+
+  $(".result").live("mouseleave", function() {
+    $(this).removeClass("selected");
   });
 
   $(".result").live("click", function() {
