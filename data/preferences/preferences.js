@@ -1,6 +1,10 @@
-//preferences.js
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-self.port.on("add", function(type, engines) {
+"use strict";
+
+self.port.on("init", function(type, engines) {
   init(type, engines);
 });
 
@@ -17,6 +21,14 @@ function updateDefaults() {
   self.port.emit("order", results);
 }
 
+function removeFromDefault(engine) {
+  self.port.emit("defaults.remove", engine);
+}
+
+function addToDefault(engine) {
+  self.port.emit("defaults.add", engine);
+}
+
 function createDefaultEngine(engine) {
   return  $("<li class='engine'/>").
             attr("id", _convertEngineId(engine.id)).
@@ -31,7 +43,7 @@ function createDefaultEngine(engine) {
                                 click(function () {
                                   //console.log("self.port.emit", engine.id, $( "#defaults" ).find("li").map(function(i, li) { return $(li).data("id"); }));
                                   $(this).parents(".engine").remove();
-                                  updateDefaults();
+                                  removeFromDefault(engine);
                                   $("#others").append(createOtherEngine(engine));
                                 })
                           )
@@ -63,7 +75,7 @@ function createOtherEngine(engine) {
                                   //console.log("self.port.emit", engine.id, $(this).hasClass("active"));
                                   $( "#defaults" ).append(createDefaultEngine(engine));
                                   $(this).parents(".engine").remove();
-                                  updateDefaults();
+                                  addToDefault(engine);
                                 })
                           )
             );
