@@ -3,9 +3,12 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
+const data = require("self").data;
 const { Cc, Ci } = require("chrome");
 const { SearchEnginesCollector } = require("search-engines-collector");
 const url = require("api-utils/url");
+// borrowed from addon-kit/tests
+const testPageMod = require("pagemod-test-helpers").testPageMod;
 
 const TEST_FILE = "test-search-engines-collector.js";
 
@@ -13,17 +16,17 @@ const TEST_FOLDER_URI = module.uri.split(TEST_FILE)[0];
 
 //console.log("TEST_FOLDER_URI", TEST_FOLDER_URI);
 
-//const HTML_FILE = "test-search-engines-collector.html";
-//const HTML_URI = module.uri.replace(TEST_FILE, HTML_FILE);
-//
+const HTML_FILE = "fixtures/test-search-engines-collector-pagemod.html";
+const HTML_URI = module.uri.replace(TEST_FILE, HTML_FILE);
+
 //console.log("HTML_FILE", HTML_FILE, "HTML_URI", HTML_URI);
 
-const WIKIPEDIA_OPENSEARCH_FILE = "wikipedia-opensearch.xml";
+const WIKIPEDIA_OPENSEARCH_FILE = "fixtures/wikipedia-opensearch.xml";
 const WIKIPEDIA_URI = module.uri.replace(TEST_FILE, WIKIPEDIA_OPENSEARCH_FILE);
 
 //console.log("WIKIPEDIA_OPENSEARCH_FILE", WIKIPEDIA_OPENSEARCH_FILE, "WIKIPEDIA_URI", WIKIPEDIA_URI);
 
-const FOURSQUARE_OPENSEARCH_FILE = "foursquare-opensearch.xml";
+const FOURSQUARE_OPENSEARCH_FILE = "fixtures/foursquare-opensearch.xml";
 const FOURSQUARE_URI = module.uri.replace(TEST_FILE, FOURSQUARE_OPENSEARCH_FILE);
 
 //console.log("FOURSQUARE_OPENSEARCH_FILE", FOURSQUARE_OPENSEARCH_FILE, "FOURSQUARE_URI", FOURSQUARE_URI);
@@ -50,29 +53,36 @@ function readBinaryURI(uri) {
   return data;
 }
 
-//exports.testPageMod = function(test) {
-//  let mods = testPageMod(test, WIKIPEDIA_OPENSEARCH,
-//                         [{
-//                            include: /wikipedia-opensearch.xml/,
-//                            contentScriptWhen: 'end',
-//                            contentScriptFile: data.url("search-engines-collector-pagemod.js"),
-//                            onAttach: function(worker) {
-//                              worker.on('message', function(data) {
-//                                //console.log("PageMod", data);
-//                                SearchEnginesCollector.collect(data);
-//                              });
-//                            }
-//                          }],
-//    function(win, done) {
-//      test.assertEqual(
-//        win.document.body.getAttribute("JEP-107"),
-//        "worked",
-//        "PageMod.onReady test"
-//      );
-//      done();
-//    }
-//  );
-//};
+exports.testPageModCollector = function(test) {
+  let workerDone = false,
+      callbackDone = null;
+  let mods = testPageMod(test, HTML_URI,
+                         [{
+                            include: HTML_URI,
+                            contentScriptWhen: 'end',
+                            contentScriptFile: data.url("search-engines-collector-pagemod.js"),
+                            onAttach: function(worker) {
+                              worker.on('message', function(data) {
+                                var link = data.pop();
+                                test.assertEqual(link.site, HTML_URI);
+                                test.assertEqual(link.name, "FourSquare");
+                                test.assertEqual(link.opensearch, "/foursquare-opensearch.xml");
+                                workerDone = true;
+                                if (callbackDone) {
+                                  callbackDone();
+                                }
+                              });
+                            }
+                          }],
+    function(win, done) {
+      (callbackDone = function() {
+        if (workerDone) {
+          done();
+        }
+      })();
+    }
+  );
+};
 
 exports.testCollectorWikipedia = function(test) {
 
