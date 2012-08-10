@@ -117,17 +117,14 @@ const Panel = Symbiont.resolve({
     let xulPanel = this._xulPanel;
     if (!xulPanel) {
       xulPanel = this._xulPanel = document.createElementNS(XUL_NS, 'panel');
-      // XXX no arrow panel but do autofocus and no tooltips necessary
-      xulPanel.setAttribute("noautofocus", "true");
-      xulPanel.setAttribute("tooltiptext", "");
+      xulPanel.setAttribute("type", "arrow");
 
       // One anonymous node has a big padding that doesn't work well with
       // Jetpack, as we would like to display an iframe that completely fills
       // the panel.
       // -> Use a XBL wrapper with inner stylesheet to remove this padding.
       let css = ".panel-inner-arrowcontent, .panel-arrowcontent {padding: 0;}";
-      // XXX we don't want an arrow panel, just a regular panel sans arrow
-      let originalXBL = "chrome://global/content/bindings/popup.xml#panel";
+      let originalXBL = "chrome://global/content/bindings/popup.xml#arrowpanel";
       let binding =
       '<bindings xmlns="http://www.mozilla.org/xbl">' +
         '<binding id="id" extends="' + originalXBL + '">' +
@@ -207,8 +204,7 @@ const Panel = Symbiont.resolve({
         timer.setTimeout(waitForBinding, 50);
         return;
       }
-      // XXX ignoring the position calculated above and just using after_start
-      xulPanel.openPopup(anchor, "after_start", x, y);
+      xulPanel.openPopup(anchor, position, x, y);
     }
     waitForBinding();
 
@@ -318,8 +314,7 @@ const Panel = Symbiont.resolve({
         this.on('inited', this._onShow.bind(this));
       } else {
         this._frameLoadersSwapped = true;
-        // XXX we don't need that arrow style
-        // this._applyStyleToDocument();
+        this._applyStyleToDocument();
         this._emit('show');
       }
     } catch(e) {
