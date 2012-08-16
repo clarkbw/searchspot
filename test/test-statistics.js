@@ -6,8 +6,8 @@
 const { components } = require("chrome");
 const BinaryOutputStream = components.Constructor("@mozilla.org/binaryoutputstream;1", "nsIBinaryOutputStream", "setOutputStream");
 const BinaryInputStream = components.Constructor("@mozilla.org/binaryinputstream;1", "nsIBinaryInputStream", "setInputStream");
-const { SearchEngines, SearchEngine } = require("search-engines"),
-      { StatisticsReporter } = require("statistics");
+const { StatisticsReporter } = require("statistics"),
+      { SearchEngines, SearchEngine } = require("search-engines");
 
 const ExampleSearchEngine = SearchEngine("http://www.example.com/opensearch",
                                          "Example Search",
@@ -39,18 +39,12 @@ exports.testUsage = function(test) {
 
     obj.data.forEach(function(item) {
       var engine = JSON.parse(item.engine);
-      console.log("action", item.action);
-      console.log("engine", engine.name);
+      //console.log("action", item.action);
+      //console.log("engine", engine.name);
       if (item.stats) {
         if (ExampleSearchEngine.id == engine.id) {
           var stat0 = JSON.parse(item.stats)[0];
-          test.assertEqual(stat.id, stat0.id);
-          test.assertEqual(stat.name, stat0.name);
-          test.assertEqual(stat.queryURL, stat0.queryURL);
-          test.assertEqual(stat.suggestionURL, stat0.suggestionURL);
-          test.assertEqual(stat.order, stat0.order);
-          test.assertEqual(stat.suggestions, stat0.suggestions);
-          test.assertEqual(stat.index, stat0.index);
+          test.assertNotStrictEqual(stat, stat0, engine.name + " statistic was sent correctly");
         }
       }
     })
