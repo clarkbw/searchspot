@@ -89,10 +89,10 @@ exports.testCollectorWikipedia = function(test) {
   SearchEnginesCollector.on("engine", function onCollectorWikipedia(collected) {
     SearchEnginesCollector.removeListener("engine", onCollectorWikipedia);
 
-    test.assertEqual(collected.name, "Wikipedia (en)", "NAME");
-    test.assertEqual(collected.queryURL,"http://en.wikipedia.org/w/index.php?title=Special:Search&search={searchTerms}", "QUERY URL");
-    test.assertEqual(collected.suggestionURL,"http://en.wikipedia.org/w/api.php?action=opensearch&search={searchTerms}&namespace=0", "SUGGESTION URL");
-    test.assertEqual(collected.icon,"http://en.wikipedia.org/favicon.ico", "ICON");
+    test.assertEqual(collected.name, "Wikipedia (en)", "Wikipedia name is correct");
+    test.assertEqual(collected.queryURL,"http://en.wikipedia.org/w/index.php?title=Special:Search&search={searchTerms}", "Wikipedia Query URL is correct");
+    test.assertEqual(collected.suggestionURL,"http://en.wikipedia.org/w/api.php?action=opensearch&search={searchTerms}&namespace=0", "Wikipedia Suggestion URL is correct");
+    test.assertEqual(collected.icon,"http://en.wikipedia.org/favicon.ico", "Wikipedia Icon is correct");
 
     test.done();
   });
@@ -107,10 +107,10 @@ exports.testCollectorFoursquare = function(test) {
   SearchEnginesCollector.on("engine", function onCollectorFoursquare(collected) {
     SearchEnginesCollector.removeListener("engine", onCollectorFoursquare);
 
-    test.assertEqual(collected.name, "foursquare", "NAME");
-    test.assertEqual(collected.queryURL,"https://foursquare.com/search?q={searchTerms}", "QUERY URL");
-    test.assertEqual(collected.suggestionURL,"", "SUGGESTION URL");
-    test.assertEqual(collected.icon,"https://foursquare.com/favicon.ico", "ICON");
+    test.assertEqual(collected.name, "foursquare", "FourSquare name is correct");
+    test.assertEqual(collected.queryURL,"https://foursquare.com/search?q={searchTerms}", "FourSquare Query URL is correct");
+    test.assertEqual(collected.suggestionURL,"", "FourSquare Suggestion URL is empty");
+    test.assertEqual(collected.icon,"https://foursquare.com/favicon.ico", "FourSquare icon is correct");
 
     test.done();
   });
