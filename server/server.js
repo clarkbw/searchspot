@@ -37,7 +37,7 @@ app.get('/engine/id/:id', function(req, res){
   res.contentType('json');
   var id = req.param("id");
   if (id) {
-    SearchEngine.findOne({ "_id" : id }).sort("used_count", -1).exec(function(err, docs) {
+    SearchEngine.findOne({ "_id" : id }).sort({used_count : -1}).exec(function(err, docs) {
     res.json(docs);
     });
   }
@@ -59,7 +59,7 @@ app.get('/engine/url/:url', function(req, res){
   res.contentType('json');
   var url = req.param("url");
   if (url) {
-    SearchEngine.find({ "url" : url }).sort("used_count", -1).exec(function(err, docs) {
+    SearchEngine.find({ "url" : url }).sort({used_count : -1}).exec(function(err, docs) {
     res.json(docs);
     });
   }
@@ -72,7 +72,7 @@ app.get('/engine/url/:url', function(req, res){
  */
 app.get('/engines', function(req, res){
   res.contentType('json');
-  SearchEngine.find({}).sort("used_count", -1).exec(function(err, docs) {
+  SearchEngine.find({}).sort({used_count : -1}).exec(function(err, docs) {
     //console.log("err", err);
     //console.log("docs", docs);
     res.json(docs);
@@ -110,56 +110,50 @@ app.get('/usage', function(req, res){
 });
 
 app.post('/service', function(req, res, next){
-  //console.dir(req.body.data);
+  //console.dir(decodeURIComponent(req.body.data));
 
   try {
-    var item = JSON.parse(decodeURIComponent(req.body.data)),
-        action = item.action,
-        data = item.data,
-        stats = data.stats;
-    var timestamp = Date.now();
+    var items = JSON.parse(decodeURIComponent(req.body.data));
+    items.data.forEach(function(item) {
+      var action = item.action,
+          engine = JSON.parse(item.engine),
+          stats = null;
+      var timestamp = Date.now();
 
-    //console.log("action", JSON.stringify(action));
-    //console.log("data", JSON.stringify(data));
-    if (data) {
-      if (action == "use") {
-        data = data.engine;
-
-        // stats is an object of objects { id : { id: id, order : #, suggestions : #, index? : # }}
-        var count = 0;
-        for(var i in stats) {
-          //console.log("stats", i, JSON.stringify(stats[i]));
-          var stat = stats[i];
-          count+= 1;
-          //var likely = {"id":"http://www.linkedin.com/search/fpsearch","order":2,"suggestions":1,"index":0};
-          SearchUsage.create(stat, function(err, usage) {
-            //console.log("SearchUsage.err", err);
-            //console.log("SearchUsage.usage", usage);
-          });
-        }
-      }
-
-      SearchEngine.findOrCreate(data, function(err, engine) {
-        //console.log("SearchEngine.err", err);
-        //console.log("SearchEngine.engine", engine);
+      //console.log("action", JSON.stringify(action));
+      //console.log("data", JSON.stringify(data));
+      if (engine) {
         if (action == "use") {
-          engine.used_count.$inc();
-          engine.save();
-          //Model = mongoose.model('SearchEngine', SearchEngine);
-          //Model.update({ _id : obj._id }, { $inc : { used_count : 1 } });
-        }
-      });
+          stats = JSON.parse(item.stats);
 
-      res.send(JSON.stringify({ success : true }));
-    } else {
-      res.send(JSON.stringify({ success : false }));
-    }
+          // stats is an object of objects { id : { id: id, order : #, suggestions : #, index? : # }}
+          for(var i in stats) {
+            //console.log("stats", i, JSON.stringify(stats[i]));
+            var stat = stats[i];
+
+            SearchUsage.create(stat, function(err, usage) {
+              //console.log("SearchUsage.err", err);
+              //console.log("SearchUsage.usage", usage);
+            });
+          }
+        }
+
+        SearchEngine.findOneAndUpdate({'id' : engine.url || engine.id || engine.siteURL },
+                                      {$set: {$inc: {used_count: 1}}},
+                                      {upsert : true, sort : {used_count : -1}}
+        );
+
+        res.send(JSON.stringify({ success : true }));
+      } else {
+        res.send(JSON.stringify({ success : false }));
+      }
+    });
 
   } catch (e) {
     console.log("e", e);
-    console.log(JSON.stringify(item));
-    console.log("req.body", req.body);
-    console.log("req.body.data", req.body.data);
+    console.log(JSON.stringify(items));
+    //console.log("req.body", req.body);
+    //console.log("req.body.data", req.body.data);
     res.send(JSON.stringify({ success : false, error : e }));
   }
 

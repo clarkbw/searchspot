@@ -33,7 +33,9 @@ module.exports = function(mongoose, SearchEngine) {
     var SearchUsageModel = mongoose.model(MODEL_NAME, SearchUsage),
         searchusage = null;
 
-    SearchEngine.findOrCreate(obj.engine,
+    SearchEngine.findOneAndUpdate({'id' : obj.engine.url || obj.engine.id || obj.engine.siteURL },
+                                  {},
+                                  {upsert : true, sort : {used_count : -1}},
       function(err, engine) {
         console.log("err", err);
         console.log("engine", engine);
@@ -50,6 +52,7 @@ module.exports = function(mongoose, SearchEngine) {
         });
       }
     );
+
   }
 
   return mongoose.model(MODEL_NAME, SearchUsage);

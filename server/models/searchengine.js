@@ -95,11 +95,11 @@ module.exports = function(mongoose) {
   }
 
   SearchEngine.statics.findGeoLocation = function findGeoLocation(callback) {
-    return this.find({$or : [{ queryGeoLocationExtension : true },{ suggestGeoLocationExtension : true }]}).sort("used_count", -1).exec(callback);
+    return this.find({$or : [{ queryGeoLocationExtension : true },{ suggestGeoLocationExtension : true }]}).sort({used_count : -1}).exec(callback);
   }
 
   SearchEngine.statics.findHttps = function findHttps(callback) {
-    return this.find({$or : [{ queryURLHTTPS : true },{ suggestionURLHTTPS : true }]}).sort("used_count", -1).exec(callback);
+    return this.find({$or : [{ queryURLHTTPS : true },{ suggestionURLHTTPS : true }]}).sort({used_count : -1}).exec(callback);
   }
 
   SearchEngine.statics.create = function create(obj) {
@@ -113,28 +113,6 @@ module.exports = function(mongoose) {
                                   });
       return searchengine;
   }
-
-  SearchEngine.statics.findOrCreate = function incrOrCreate(obj, callback) {
-    var searchengine = null;
-
-    return this.where({'id' : obj.url || obj.id || obj.siteURL }).sort("used_count", 1).exec(function (err, docs) {
-      if (err) { console.error("Error Finding " + MODEL_NAME, err); throw err; }
-      docs.forEach(function(doc) {
-        if (doc.equalsObject(obj)) {
-          searchengine = doc;
-        }
-      });
-      if (searchengine === null) {
-        searchengine = SearchEngine.statics.create(obj);
-        searchengine.save(function(err) {
-          callback(err, searchengine);
-        });
-      } else {
-        callback(err, searchengine);
-      }
-      return searchengine;
-    });
-  };
 
   return mongoose.model(MODEL_NAME, SearchEngine);
 }
