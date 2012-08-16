@@ -23,6 +23,14 @@ exports.test11DefaultSortOrder = function(test) {
   test.assertEqual(SearchEngines.defaults.all[2].id, "http://en.wikipedia.org/w/opensearch_desc.php");
 }
 
+exports.testLindedIn = function(test) {
+  var linkedIn = SearchEngine("http://www.linkedin.com/search/fpsearch",
+                              "LinkedIn",
+                              "http://www.linkedin.com/search/fpsearch?keywords={searchTerms}",
+                              "http://www.linkedin.com/ta/federator?query={searchTerms}&types=mynetwork,company,group,sitefeature,skill",
+                              "http://static01.linkedin.com/scds/common/u/img/favicon_v3.ico");
+  test.assertNotStrictEqual(SearchEngines.others.get(linkedIn.id), linkedIn);
+}
 
 exports.test2AddAndRemoveDefaults = function(test) {
   // Start with the original 3 
