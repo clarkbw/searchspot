@@ -245,12 +245,13 @@ $(document).ready(function () {
     $(this).removeClass("selected");
   });
 
-  $(".result").live("click", function() {
+  $(".result").live("click", function(evt) {
     var id = $(this).data("id");
     setStat(id, "index",  $(this).data("index"))
     self.port.emit("click", { "id" : id,
                               "terms" : $(this).data("terms"),
-                              "stats" : stats } );
+                              "stats" : stats,
+                              "tab" : (evt.which == 2 || (evt.metaKey || evt.ctrlKey)) } );
     return false;
   });
 
