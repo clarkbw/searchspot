@@ -18,6 +18,9 @@ const ExampleSearchEngine = SearchEngine("http://www.example.com/opensearch",
 require("observer-service").notify("search:debug", true);
 
 exports.testUsage = function(test) {
+  // Make the reporter send out stats every second
+  StatisticsReporter.timeout = 1000 * 1;
+
   var stat = ExampleSearchEngine.toJSON();
       stat["order"] = 0;
       stat["suggestions"] = 3;
@@ -52,5 +55,5 @@ exports.testUsage = function(test) {
     server.stop(function() { test.done(); });
   });
   StatisticsReporter.send("use", ExampleSearchEngine, [stat]);
-  test.waitUntilDone(10 * 1000);
+  test.waitUntilDone(15 * 1000);
 }
