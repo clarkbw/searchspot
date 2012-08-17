@@ -7,17 +7,17 @@
   <link href="../css/bootstrap.css" rel="stylesheet">
   <link href="../css/bootstrap-responsive.css" rel="stylesheet">
 
-  <!--<script type="text/javascript" src="../js/jquery.js"></script>-->
-  <!--<script type="text/javascript" src="../js/jquery-ui-1.8.21.custom.min.js"></script>-->
+  <script type="text/javascript" src="../js/jquery.js"></script>
+  <script type="text/javascript" src="../js/jquery-ui-1.8.21.custom.min.js"></script>
 
   <script type="text/javascript">
   // This is for debugging purposes, these <scripts> are ignored by the panel loader
-  //if (!self.port) {
-  //  self.port = { on : function(signal, callback) { }, emit : function(signal, objects) { console.log("emit", signal, objects); } };
-  //}
+  if (!self.port) {
+    self.port = { on : function(signal, callback) { }, emit : function(signal, objects) { console.log("emit", signal, objects); } };
+  }
   </script>
 
-  <!--<script type="text/javascript" src="preferences.js"></script>-->
+  <script type="text/javascript" src="preferences.js"></script>
 
   <style type="text/css">
     #content {
@@ -38,6 +38,13 @@
       background-color: #fff;
       text-align: right;
     }
+    .defaults .engine {
+      cursor: move;
+    }
+    .btn {
+      font-weight: bold;
+      cursor: pointer;
+    }
     .icon {
       margin: 5px;
       vertical-align: middle;
@@ -47,7 +54,10 @@
     }
     .name {
       margin: 5px;
-      cursor: move;
+    }
+    .url {
+      margin: 5px 0;
+      color: #666;
     }
   </style>
 </head>
@@ -56,15 +66,7 @@
   <div class="navbar navbar-fixed-top">
     <div class="navbar-inner">
       <div class="container">
-        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </a>
-        <a class="brand" href="">Awesome Search</a>
-        <div class="nav-collapse">
-          <ul class="nav"></ul>
-        </div>
+        <span class="brand">Awesome Search</span>
       </div>
     </div>
   </div>
@@ -72,14 +74,14 @@
   <div id="content" class="container">
     <div class="row">
       <div class="span6">
-        <div>
+        <div class="span6">
           <h3>Searches you're using</h3>
           <small>feel free to reorder these!</small>
         </div>
         <div class="defaults sections"></div>
       </div>
       <div class="span6">
-        <div>
+        <div class="span6">
           <h5>Other Searches You Might Like</h5>
           <small>these are other search engines that might be useful for you</small>
         </div>

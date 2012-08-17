@@ -8,17 +8,36 @@ self.port.on("init", function(type, engines) {
   init(type, engines);
 });
 
+self.port.on("defaults.added", function(engine) {
+  addDefaultEngine($("#defaults"), engine);
+});
+
+function addDefaultEngine($choices, engine) {
+  if ($("#" + _convertEngineId(engine.id)).length <= 0) {
+    $choices.append(createDefaultEngine(engine));
+  }
+}
+
+self.port.on("others.added", function(engine) {
+  addOtherEngine($("#others"), engine);
+});
+
+function addOtherEngine($choices, engine) {
+  if ($("#" + _convertEngineId(engine.id)).length <= 0) {
+    $choices.append(createOtherEngine(engine));
+  }
+}
+
 function updateDefaults() {
-  //console.log("updateDefaults");
   var results = [];
   try {
-  $( "#defaults" ).find("li").each(function() {
-    //console.log($(this), $(this).data("id"));
-    results.push($(this).data("id"));
-  });
+    $( "#defaults" ).find("li").each(function() {
+      //console.log($(this), $(this).data("id"));
+      results.push($(this).data("id"));
+    });
   } catch (e) { console.error(JSON.stringify(e)); }
-  //console.log("results", results);
-  self.port.emit("order", results);
+  console.log("results", JSON.stringify(results));
+  self.port.emit("defaults.sort", results);
 }
 
 function removeFromDefault(engine) {
@@ -35,28 +54,20 @@ function createDefaultEngine(engine) {
             data("id", engine.id).
             append(
             $("<div/>").append($("<img class='icon pull-left'/>").attr("src", engine.icon),
-                               $("<span class='name pull-left'/>").text(engine.name),
-                               $("<div class='name pull-left'/>").text(engine.queryURL.replace(/http(s)?:\/\/(www\.)?/,"").match(/([a-zA-Z0-9\-\.]+)\//)[0].replace(/\//,""))).
+                               $("<span class='name pull-left'/>").text(engine.name)).
                         append(
                           $("<button class='btn'/>").
                                 text("X").
                                 click(function () {
-                                  //console.log("self.port.emit", engine.id, $( "#defaults" ).find("li").map(function(i, li) { return $(li).data("id"); }));
                                   $(this).parents(".engine").remove();
                                   removeFromDefault(engine);
                                   $("#others").append(createOtherEngine(engine));
                                 })
-                          )
+                          ),
+                         $("<div class=''/>").append(
+                          $("<div class='url' style='text-align:left;margin-left:32px;'/>").text(engine.queryURL.replace(/http(s)?:\/\/(www\.)?/,"").match(/([a-zA-Z0-9\-\.]+)\//)[0].replace(/\//,""))
+                         )
                        )
-}
-
-function removeDefaultEngineById(id) {
-  $( "#defaults" ).find("li").each(function() {
-    if ($(this).data("id") == id) {
-      $(this).remove();
-      return;
-    }
-  });
 }
 
 function createOtherEngine(engine) {
@@ -64,9 +75,8 @@ function createOtherEngine(engine) {
             attr("id", _convertEngineId(engine.id)).
             data("id", engine.id).
             append(
-              $("<div class=''/>").
-                append($("<img class='icon pull-left'/>").
-                          attr("src", engine.icon),
+              $("<div/>").
+                append($("<img class='icon pull-left'/>").attr("src", engine.icon),
                        $("<span class='name pull-left'/>").text(engine.name)).
                          append(
                           $("<button class='btn'/>").
@@ -77,7 +87,10 @@ function createOtherEngine(engine) {
                                   $(this).parents(".engine").remove();
                                   addToDefault(engine);
                                 })
-                          )
+                          ),
+                         $("<div class=''/>").append(
+                          $("<div class='url' style='text-align:left;margin-left:32px;'/>").text(engine.queryURL.replace(/http(s)?:\/\/(www\.)?/,"").match(/([a-zA-Z0-9\-\.]+)\//)[0].replace(/\//,""))
+                         )
             );
 }
 
@@ -100,9 +113,7 @@ function init(type, engines) {
     }
 
     engines.forEach(function (engine, index, array) {
-      if ($("#" + _convertEngineId(engine.id)).length <= 0) {
-        $choices.append(createDefaultEngine(engine));
-      }
+      addDefaultEngine($choices, engine);
     });
 
   } else {
@@ -114,9 +125,7 @@ function init(type, engines) {
     }
 
     engines.forEach(function (engine, index, array) {
-      if ($("#" + _convertEngineId(engine.id)).length <= 0) {
-        $choices.append(createOtherEngine(engine));
-      }
+      addOtherEngine($choices, engine);
     });
 
   }
@@ -128,6 +137,11 @@ function _convertEngineId(engineId) {
 }
 
 $(document).ready(function () {
+
+// We only want to continue if we're debugging
+if (window.location.protocol != "file:") {
+  return;
+}
 
 var defaults = [];
 defaults.push({"id":"http://www.google.com/","name":"Google","siteURL":"http://www.google.com/","host":"http:/www.google.com/","type":"suggest","queryURL":"http://www.google.com/search?q={searchTerms}&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a","suggestionURL":"http://suggestqueries.google.com/complete/search?output=firefox&client=firefox&hl=en-US&q={searchTerms}","icon":"data:image/png;base64,AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADs9Pt8xetPtu9FsfFNtu%2BTzvb2%2B%2Fne4dFJeBw0egA%2FfAJAfAA8ewBBegAAAAD%2B%2FPtft98Mp%2BwWsfAVsvEbs%2FQeqvF8xO7%2F%2F%2F63yqkxdgM7gwE%2FggM%2BfQA%2BegBDeQDe7PIbotgQufcMufEPtfIPsvAbs%2FQvq%2Bfz%2Bf%2F%2B%2B%2FZKhR05hgBBhQI8hgBAgAI9ewD0%2B%2Fg3pswAtO8Cxf4Kw%2FsJvvYAqupKsNv%2B%2Fv7%2F%2FP5VkSU0iQA7jQA9hgBDgQU%2BfQH%2F%2Ff%2FQ6fM4sM4KsN8AteMCruIqqdbZ7PH8%2Fv%2Fg6Nc%2Fhg05kAA8jAM9iQI%2BhQA%2BgQDQu6b97uv%2F%2F%2F7V8Pqw3eiWz97q8%2Ff%2F%2F%2F%2F7%2FPptpkkqjQE4kwA7kAA5iwI8iAA8hQCOSSKdXjiyflbAkG7u2s%2F%2B%2F%2F39%2F%2F7r8utrqEYtjQE8lgA7kwA7kwA9jwA9igA9hACiWSekVRyeSgiYSBHx6N%2F%2B%2Fv7k7OFRmiYtlAA5lwI7lwI4lAA7kgI9jwE9iwI4iQCoVhWcTxCmb0K%2BooT8%2Fv%2F7%2F%2F%2FJ2r8fdwI1mwA3mQA3mgA8lAE8lAE4jwA9iwE%2BhwGfXifWvqz%2B%2Ff%2F58u%2Fev6Dt4tr%2B%2F%2F2ZuIUsggA7mgM6mAM3lgA5lgA6kQE%2FkwBChwHt4dv%2F%2F%2F728ei1bCi7VAC5XQ7kz7n%2F%2F%2F6bsZkgcB03lQA9lgM7kwA2iQktZToPK4r9%2F%2F%2F9%2F%2F%2FSqYK5UwDKZAS9WALIkFn%2B%2F%2F3%2F%2BP8oKccGGcIRJrERILYFEMwAAuEAAdX%2F%2Ff7%2F%2FP%2B%2BfDvGXQLIZgLEWgLOjlf7%2F%2F%2F%2F%2F%2F9QU90EAPQAAf8DAP0AAfMAAOUDAtr%2F%2F%2F%2F7%2B%2Fu2bCTIYwDPZgDBWQDSr4P%2F%2Fv%2F%2F%2FP5GRuABAPkAA%2FwBAfkDAPAAAesAAN%2F%2F%2B%2Fz%2F%2F%2F64g1C5VwDMYwK8Yg7y5tz8%2Fv%2FV1PYKDOcAAP0DAf4AAf0AAfYEAOwAAuAAAAD%2F%2FPvi28ymXyChTATRrIb8%2F%2F3v8fk6P8MAAdUCAvoAAP0CAP0AAfYAAO4AAACAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAA"});
@@ -146,8 +160,8 @@ others.push({"id":"http://www.bing.com/search","name":"Bing","siteURL":"http://w
 others.push({"id":"https://github.com/opensearch.xml","name":"GitHub","siteURL":"https://github.com/opensearch.xml","host":"https://github.com","type":"suggest","queryURL":"http://github.com/search","suggestionURL":"","icon":"data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ\nbWFnZVJlYWR5ccllPAAAAVpJREFUeNqM0s0rRGEUx/F7x0RKxob4A6bZKBYWFkLZqIkkC7FUsrCw\noCxsZcN/IFmIP4E9ZWnyurBR3krZeH8b1/dMv5vTpDue+szzzL33nJ5znieIoihIGCGmMIt0+ctS\nbIUETbhHEbm/EqSD5PGOC2TwgHo04xaPv9tIHhbUoPUMXjAcx4aln9BKDcYxgRR20IJNDKEO69hC\nFie2JnYx3sGYJcQ5jrU2PTjEDbpwpeeXWPZN3NOLnLb8hm1UoaBAG3P6btR26pt4rblDDarRs6KO\nMh7fmr/idZxgAW3Y0H/r/IqCfYKU5o/yB1b7kY5tGp04Uwmh++5Vcx59PoGNWtV3pznQXK2SbLf7\n6s8kVv09yLpGRro0SwoawIgrt1fNzPtT2FVd/WjVCdiL9qQb5k8ho3Ia8eTKea50TeMd2LZOXQmf\nmP9PrL/K3RjURTrAmk4lMcGPAAMAEvmJGW+ZZPAAAAAASUVORK5CYII="});
 others.push({"id":"http://www.yelp.com/opensearch","name":"Yelp","siteURL":"http://www.yelp.com/opensearch","host":"http://www.yelp.com","type":"suggest","queryURL":"http://www.yelp.com/search?find_desc={searchTerms}&src=opensearch","suggestionURL":"","icon":"http://media2.ak.yelpcdn.com/static/201012161623981098/img/ico/favicon.ico"});
   //
-  //init("defaults", defaults);
+  init("defaults", defaults);
   //
-  //init("others", others);
+  init("others", others);
 });
 
