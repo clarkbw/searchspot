@@ -1,0 +1,49 @@
+Privacy Policy
+Mozilla (Awesome Search)
+
+Adopted: August 11, 2009
+
+We’re working hard to protect your privacy while delivering products and services that bring you the performance and protection you desire in your personal computing. This Mozilla Awesome Search Privacy Policy (“Policy”) explains how Mozilla Corporation (“Mozilla”), a wholly-owned subsidiary of the non-profit Mozilla Foundation, collects and uses information from user tests conducted through Mozilla’s Awesome Search program (“Awesome Search”). It does not apply to other Mozilla websites, products or services, each of which have their own privacy policy. If you are using another Mozilla product at the time you are participating in Awesome Search, you should look at the relevant privacy policy to determine what other information is being collected (e.g., See Mozilla’s Firefox Privacy Policy for further information on data collected from all Firefox users).
+What is Awesome Search?
+
+Awesome Search was created to provide a new set of tools and capabilities to increase the efficiency and effectiveness of our user searching. Awesome Search is a stand-alone add-on. However Awesome Search is made available, you will always have to choose to participate in the program and unless you do so, no data will be collected by Awesome Search. You are in control. You choose to participate and you choose to share your data. No data will be collected unless you choose to do so. Please visit https://labs.mozilla.com/projects/awesome-search/ for more information on Awesome Search.
+Information Collected from Awesome Search Participants
+
+In order to improve our searching and the open search landscape, Mozilla will collect certain data in relation to your participation in Awesome Search tests. Your data won't be transmitted until you download and begin useing the Awesome Search add-on. When your data is submitted, it will be aggregated into a big batch with everyone else's info and will not be directly connected back to you. All the aggregated data will be open to the public...but to be extra clear none of it will be personally identifiable as yours or anyone else's.
+
+The Data consist of information that cannot be directly associated with a specific person or entity, it only includes data about which search engines you use and how often. The Data does not include your name or email address, and will not be combined with any information that personally identifies you.
+
+If you change your mind about participating, you may opt out at any time by uninstalling the add-on, and the Data will not be transmitted to Mozilla.
+Transfer of Data to the U.S.
+
+By registering for Awesome Search, you consent to the transfer of the Data and any other information collected under this Policy to the United States, which may provide a lesser level of data security than in your country of residence.
+Information Disclosure
+
+Other than its wholly-owned subsidiaries listed below, Mozilla does not share the raw Data with any third party. We only provide the raw Data to Mozilla employees and contractors, as well as employees and contractors of the following wholly-owned subsidiaries and affiliated companies of Mozilla: MZ Denmark ApS, MZ Canada Ltd, MOZ 2008 Corporation, Mozilla Online Ltd, and Mozilla Japan. Mozilla requires its employees and contractors to sign confidentiality agreements that prohibit them from using the raw data other than for internal Mozilla purposes, or from disclosing these data to third parties.
+
+All Data will be made anonymous and aggregated, and made available to the general public in the form of aggregate data. These aggregate data do not personally identify any participants.
+
+Awesome Search is designed to remove the Data from the local database in your Firefox browser when you choose to opt out of using Awesome Search.
+Data Retention
+
+We will retain Data for the period necessary to fulfill the purposes of improving our user search, unless a longer retention period is required by law and/or regulations.
+Policy Changes
+
+Mozilla may change this Policy from time to time. Any and all changes will be reflected on this page. When Mozilla changes this Policy in a material way, a notice will be posted on the www.mozilla.com Web site. Substantive changes may also be announced through the standard mechanisms by which Mozilla communicates with its users and community, including Mozilla's "announce" mailing list and newsgroup. It is your responsibility to ensure that you understand the terms of this Policy. You should periodically check this page for any changes to the current policy.
+
+Data collected will be governed by the Policy in effect at the time the data was submitted to Mozilla.
+Questions or Concerns
+
+You may request appropriate access, correction, or deletion of Data, as permitted by law. We will seek to comply with such requests, provided that we have sufficient information to identify the Data related to you. Since the Awesome Search program collects very limited information about participants, it may not be possible to identify Data that you submitted. We recommend that you print a copy of the Data for your records.
+
+Any such requests or other questions or concerns regarding this Policy and Mozilla's data protection practices should be addressed to:
+
+Mozilla Corporation
+Attn:Legal Notices - Privacy
+650 Castro Street
+Suite 300
+Mountain View, CA 94041-2021
+Phone: +1-650-903-0800
+E-mail: privacy@mozilla.com
+
+We shall keep a copy of this Policy. If, at any time, you would like to see a copy of it, you should write to the above address or email address.
