@@ -9,3 +9,7 @@ The following command with the provided `local.json` will run Firefox with my
 development profile and with local development mode turned on.
 
 `cfx run --use-config=ffdev`
+
+To run tests you'll want to use the following command
+
+`cfx test  --use-config=fftest --stop-on-error --verbose`
