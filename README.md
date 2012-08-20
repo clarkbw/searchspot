@@ -39,6 +39,8 @@ This code repo contains docs for the Awesome Search add-on and the Open Search d
 
 ### searchspot code
 
+Searchspot was developed using the [mozilla-addon-sdk](https://github.com/mozilla/addon-sdk/), you'll need to get setup using that system if you'd like to run this add-on in a development version. If you just want to install the add-on please install from here, [Awesome Search](https://addons.mozilla.org/en-us/firefox/addon/awesome-search/).
+
 Code should be documented inline, please contribute if you feel you can improve the current code comments.
 
 For code reviews see more docs in the [docs](https://github.com/clarkbw/searchspot/tree/master/docs) directory.
