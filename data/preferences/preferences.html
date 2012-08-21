@@ -46,7 +46,7 @@
       vertical-align: middle;
     }
     .icon {
-      margin: 0 5px;
+      margin: 2px 5px;
       height: 16px;
       min-width: 16px;
     }
@@ -70,7 +70,7 @@
         background-color: #F5F5F5;
         border: 1px solid #DDDDDD;
         border-radius: 4px 0 4px 0;
-        color: #9DA0A4;
+        color: #616468;
         content: "Options";
         font-size: 12px;
         font-weight: bold;
@@ -130,13 +130,13 @@
           <span class="url"><%= _.trimUrl(get("queryURL")) %></span>
           <span class="attributes">
           <% if (_.isGeo(get("queryURL"))) { %>
-            <img title="Location base results" src="../img/Geolocation-16.png" />
+            <img title="Location base results (geolocation)" src="../img/Geolocation-16.png" />
           <% } %>
           <% if (_.isHttps(get("queryURL"))) { %>
-            <img title="Secure Connection" src="../img/identity-icons-https.png" />
+            <img title="Secure Connection (https)" src="../img/identity-icons-https.png" />
           <% } %>
           <% if (!_.isEmpty(get("suggestionURL"))) { %>
-            <img title="Suggestions" src="../img/orion-task.png" />
+            <img title="Search Suggestions" src="../img/orion-task.png" />
           <% } %>
           </span>
         </div>

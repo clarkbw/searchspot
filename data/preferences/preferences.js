@@ -153,7 +153,23 @@ function init(type, engines) {
 
 }
 
+self.port.on("preferences", function(prefs) {
+  Object.keys(prefs).forEach(function(type) {
+    var value = prefs[type];
+    if (value) {
+      $("#" + type).attr("checked", "checked");
+    } else {
+      $("#" + type).removeAttr("checked");
+    }
+  });
+});
+
+
 $(document).ready(function () {
+
+  $("#stats, #collect").change(function() {
+    self.port.emit("preferences", $(this).attr("id"), "checked" == $(this).attr("checked"));
+  });
 
   $( "#defaults, #others" ).sortable({
     // sorting has stopped so lets rearrange things

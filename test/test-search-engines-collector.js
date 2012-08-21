@@ -84,8 +84,19 @@ exports.testPageModCollector = function(test) {
   );
 };
 
-exports.testCollectorWikipedia = function(test) {
+exports.testNotAllowedCollector = function(test) {
 
+  SearchEnginesCollector.allowed = false;
+
+  var link = [{ site : "http://www.example.com", name : "Example", opensearch : "/example-opensearch.xml" }];
+  test.assertNull(SearchEnginesCollector.collect(link));
+
+  SearchEnginesCollector.allowed = true;
+  test.assertEqual(SearchEnginesCollector.collect(link), link);
+}
+
+exports.testCollectorWikipedia = function(test) {
+  SearchEnginesCollector.allowed = true;
   SearchEnginesCollector.on("engine", function onCollectorWikipedia(collected) {
     SearchEnginesCollector.removeListener("engine", onCollectorWikipedia);
 
@@ -103,7 +114,7 @@ exports.testCollectorWikipedia = function(test) {
 }
 
 exports.testCollectorFoursquare = function(test) {
-
+  SearchEnginesCollector.allowed = true;
   SearchEnginesCollector.on("engine", function onCollectorFoursquare(collected) {
     SearchEnginesCollector.removeListener("engine", onCollectorFoursquare);
 
