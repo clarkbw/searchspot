@@ -4,139 +4,178 @@
 
 "use strict";
 
+var geoLocationExtRegex = /{geo:/g;
+var httpsRegex = /^https/;
+
+_.mixin({
+  isGeo : function(url) { return geoLocationExtRegex.test(url); },
+  isHttps : function(url) { return httpsRegex.test(url); },
+  trimUrl : function(url) { return url.replace(/http(s)?:\/\/(www\.)?/,"").match(/([a-zA-Z0-9\-\.]+)\//)[0].replace(/\//,""); }
+});
+
+var Engine = Backbone.Model.extend({});
+
+var EngineView = Backbone.View.extend({
+  tagName: 'li',
+  className: 'engine-view',
+  template: _.template($('#engine-template').html()),
+  events: {
+      'drop' : 'drop',
+      'added' : 'added',
+      'removed' : 'removed',
+      // remove is bound to push the item to the other list
+      'click .btn.remove' : 'removed',
+      'click .btn.add' : 'removed'
+  },
+  drop: function(event, index) {
+    this.$el.trigger('update-sort', [this.model, index]);
+  },
+  added: function(event, index) {
+    this.$el.trigger('update-added', [this.model, index]);
+  },
+  removed: function(event) {
+    this.$el.trigger('update-removed', [this.model]);
+  },
+  render: function() {
+    $(this.el).html(this.template(this.model));
+    return this;
+  }
+});
+
+var EngineList = Backbone.Collection.extend({
+  model: Engine,
+  comparator: undefined,
+  append : function(model) {
+    this.add(model, { at: this.at(this.length) });
+  }
+});
+
+var OthersEngineList = EngineList.extend({
+  comparator: function(model) {
+    return model.get('name').toLowerCase();
+  },
+});
+
+var EngineListView = Backbone.View.extend({
+  initialize: function() {
+    this.collection.bind('all', this.render, this);
+    this.collection.bind('add', this.add, this);
+    this.collection.bind('remove', this.remove, this);
+  },
+  events: {
+    'update-sort': 'updateSort',
+    'update-added': 'updateAdded',
+    'update-removed': 'updateRemoved'
+  },
+  updateSort: function(event, model, position) {
+    this.collection.remove(model, { silent : true });
+    this.collection.add(model, { at: position, silent : true });
+
+    this.sorted();
+
+    this.render();
+  },
+  updateAdded : function(event, model, position) {
+    this.collection.add(model, { at : position });
+  },
+  updateRemoved : function(event, model) {
+    this.collection.remove(model);
+  },
+  sorted : function() {
+    if (this.id == "defaults") {
+      self.port.emit("defaults.sort", this.collection.pluck('id'));
+    }
+  },
+  add : function(model) {
+    self.port.emit(this.id + ".add", model.toJSON());
+    this.sorted();
+  },
+  remove : function(model) {
+    self.port.emit(this.id + ".remove", model.toJSON());
+  },
+  render: function() {
+    this.$el.children().remove();
+    this.collection.each(this.appendModelView, this);
+    return this;
+  },
+  appendModelView: function(model) {
+    var el = new EngineView({model: model}).render().el;
+    this.$el.append(el);
+  },
+});
+
+var Application = Backbone.View.extend({
+  initialize: function() {
+    this.defaults = new EngineList();
+    this.others = new OthersEngineList();
+
+    // ensure these lists are swapping back and forth for now
+    this.defaults.bind('add', this.others.remove, this.others);
+    this.defaults.bind('remove', this.others.add, this.others);
+    this.others.bind('add', this.defaults.remove, this.defaults);
+    this.others.bind('remove', this.defaults.append, this.defaults);
+
+    this.defaultsview = new EngineListView({collection:this.defaults, el : "#defaults", id : "defaults"});
+    this.othersview = new EngineListView({collection:this.others, el : "#others", id : "others"});
+
+    this.render();
+  },
+  render: function() {
+    this.defaultsview.render();
+    this.othersview.render();
+    return this;
+  },
+});
+
+var PrefsApp = new Application();
+
 self.port.on("init", function(type, engines) {
   init(type, engines);
 });
 
 self.port.on("defaults.added", function(engine) {
-  addDefaultEngine($("#defaults"), engine);
+  // silent add because we don't want to bounce back a notification which will get bounced to us
+  PrefsApp.defaults.add(new Engine(engine), { silent : true });
 });
-
-function addDefaultEngine($choices, engine) {
-  if ($("#" + _convertEngineId(engine.id)).length <= 0) {
-    $choices.append(createDefaultEngine(engine));
-  }
-}
 
 self.port.on("others.added", function(engine) {
-  addOtherEngine($("#others"), engine);
+  // silent add because we don't want to bounce back a notification which will get bounced to us
+  PrefsApp.others.add(new Engine(engine), { silent : true });
 });
 
-function addOtherEngine($choices, engine) {
-  if ($("#" + _convertEngineId(engine.id)).length <= 0) {
-    $choices.append(createOtherEngine(engine));
-  }
-}
-
-function updateDefaults() {
-  var results = [];
-  try {
-    $( "#defaults" ).find("li").each(function() {
-      //console.log($(this), $(this).data("id"));
-      results.push($(this).data("id"));
-    });
-  } catch (e) { console.error(JSON.stringify(e)); }
-  console.log("results", JSON.stringify(results));
-  self.port.emit("defaults.sort", results);
-}
-
-function removeFromDefault(engine) {
-  self.port.emit("defaults.remove", engine);
-}
-
-function addToDefault(engine) {
-  self.port.emit("defaults.add", engine);
-}
-
-function createDefaultEngine(engine) {
-  return  $("<li class='engine'/>").
-            attr("id", _convertEngineId(engine.id)).
-            data("id", engine.id).
-            append(
-            $("<div/>").append($("<img class='icon pull-left'/>").attr("src", engine.icon),
-                               $("<span class='name pull-left'/>").text(engine.name)).
-                        append(
-                          $("<button class='btn'/>").
-                                text("X").
-                                click(function () {
-                                  $(this).parents(".engine").remove();
-                                  removeFromDefault(engine);
-                                  $("#others").append(createOtherEngine(engine));
-                                })
-                          ),
-                         $("<div class=''/>").append(
-                          $("<div class='url' style='text-align:left;margin-left:32px;'/>").text(engine.queryURL.replace(/http(s)?:\/\/(www\.)?/,"").match(/([a-zA-Z0-9\-\.]+)\//)[0].replace(/\//,""))
-                         )
-                       )
-}
-
-function createOtherEngine(engine) {
-  return  $("<li class='engine'/>").
-            attr("id", _convertEngineId(engine.id)).
-            data("id", engine.id).
-            append(
-              $("<div/>").
-                append($("<img class='icon pull-left'/>").attr("src", engine.icon),
-                       $("<span class='name pull-left'/>").text(engine.name)).
-                         append(
-                          $("<button class='btn'/>").
-                                text("+").
-                                click(function () {
-                                  //console.log("self.port.emit", engine.id, $(this).hasClass("active"));
-                                  $( "#defaults" ).append(createDefaultEngine(engine));
-                                  $(this).parents(".engine").remove();
-                                  addToDefault(engine);
-                                })
-                          ),
-                         $("<div class=''/>").append(
-                          $("<div class='url' style='text-align:left;margin-left:32px;'/>").text(engine.queryURL.replace(/http(s)?:\/\/(www\.)?/,"").match(/([a-zA-Z0-9\-\.]+)\//)[0].replace(/\//,""))
-                         )
-            );
-}
-
 function init(type, engines) {
-  var $choices = $("<ul class='engines unstyled span6'/>");
 
   if (type === "defaults") {
-    if ($("#" + type).length <= 0) {
-      $( $choices ).attr("id", type);
-
-      $( $choices ).sortable({
-                             stop: updateDefaults
-                             });
-      $( $choices ).disableSelection();
-
-      $(".defaults.sections").append($("<section/>").append($choices));
-
-    } else {
-      $choices = $("#" + type);
-    }
-
-    engines.forEach(function (engine, index, array) {
-      addDefaultEngine($choices, engine);
-    });
-
+    PrefsApp.defaults.reset(engines.map(function(item) { return new Engine(item);} ));
   } else {
-    if ($("#" + type).length <= 0) {
-      $( $choices ).attr("id", type);
-      $(".others.sections").append($("<section/>").append($choices));
-    } else {
-      $choices = $("#" + type);
-    }
-
-    engines.forEach(function (engine, index, array) {
-      addOtherEngine($choices, engine);
-    });
-
+    PrefsApp.others.reset(engines.map(function(item) { return new Engine(item);} ));
   }
 
-}
-
-function _convertEngineId(engineId) {
-  return engineId.replace(/[\s\W]+/g, "_")
 }
 
 $(document).ready(function () {
+
+  $( "#defaults, #others" ).sortable({
+    // sorting has stopped so lets rearrange things
+    stop: function(event, ui) {
+      ui.item.trigger('drop', ui.item.index());
+    },
+    receive: function(event, ui) {
+      console.log("recieve", ui);
+      ui.item.trigger('added', ui.item.index());
+    },
+    remove: function(event, ui) {
+      console.log("remove", ui);
+      ui.item.trigger('removed', ui.item.index());
+    },
+    connectWith: ".engines"
+  }).disableSelection();
+
+  $(".attributes img").live("mouseover", function() {
+    $(this).tooltip('show');
+  }).live("mouseout", function() {
+    $(this).tooltip('hide');
+  });
 
 // We only want to continue if we're debugging
 if (window.location.protocol != "file:") {
@@ -158,10 +197,8 @@ others.push({"id":"https://twitter.com/search/","name":"Twitter","siteURL":"http
 others.push({"id":"http://duckduckgo.com/opensearch_ssl.xml","name":"DuckDuckGo","siteURL":"http://duckduckgo.com/opensearch_ssl.xml","host":"http://duckduckgo.com","type":"suggest","queryURL":"https://duckduckgo.com/?q={searchTerms}","suggestionURL":"","icon":"http://duckduckgo.com/favicon.ico"});
 others.push({"id":"http://www.bing.com/search","name":"Bing","siteURL":"http://www.bing.com/search","host":"http://www.bing.com","type":"suggest","queryURL":"http://www.bing.com/search?q={searchTerms}&form=MOZSBR&pc=MOZI","suggestionURL":"http://api.bing.com/osjson.aspx?query={searchTerms}&form=OSDJAS","icon":"data:image/x-icon;base64,AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAABMLAAATCwAAAAAAAAAAAAAVpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8ysf97zf+24//F6f/F6f/F6f+K0/9QvP8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8krP+Z2P/////////w+f/F6f/F6f/i9P/////////T7v9Bt/8Vpv8Vpv8Vpv8Vpv/T7v/////w+f97zf8Vpv8Vpv8Vpv8Vpv9QvP/T7v/////w+f9Bt/8Vpv8Vpv97zf////////9QvP8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8krP/i9P/////i9P8Vpv8Vpv+24//////i9P8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv+K0/////////8Vpv8Vpv/F6f////////8krP8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv+n3v/////w+f8Vpv8Vpv/F6f////////+n3v8krP8Vpv8Vpv8Vpv8Vpv8Vpv9tx/////////+Z2P8Vpv8Vpv/F6f/////////////i9P+K0/9QvP9QvP9tx//F6f////////+n3v8Vpv8Vpv8Vpv/F6f/////T7v+Z2P/i9P////////////////////+24/9QvP8Vpv8Vpv8Vpv8Vpv/F6f/////F6f8Vpv8Vpv8krP9QvP9QvP9Bt/8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv/F6f/////F6f8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv9Bt/9QvP9Bt/8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8Vpv8AAHBsAABhdAAAbiAAAHJ0AABsaQAAdGkAACBDAABlbgAAUEEAAEVYAAAuQwAAOy4AAEU7AABBVAAAQ00AAC5W"});
 others.push({"id":"https://github.com/opensearch.xml","name":"GitHub","siteURL":"https://github.com/opensearch.xml","host":"https://github.com","type":"suggest","queryURL":"http://github.com/search","suggestionURL":"","icon":"data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJ\nbWFnZVJlYWR5ccllPAAAAVpJREFUeNqM0s0rRGEUx/F7x0RKxob4A6bZKBYWFkLZqIkkC7FUsrCw\noCxsZcN/IFmIP4E9ZWnyurBR3krZeH8b1/dMv5vTpDue+szzzL33nJ5znieIoihIGCGmMIt0+ctS\nbIUETbhHEbm/EqSD5PGOC2TwgHo04xaPv9tIHhbUoPUMXjAcx4aln9BKDcYxgRR20IJNDKEO69hC\nFie2JnYx3sGYJcQ5jrU2PTjEDbpwpeeXWPZN3NOLnLb8hm1UoaBAG3P6btR26pt4rblDDarRs6KO\nMh7fmr/idZxgAW3Y0H/r/IqCfYKU5o/yB1b7kY5tGp04Uwmh++5Vcx59PoGNWtV3pznQXK2SbLf7\n6s8kVv09yLpGRro0SwoawIgrt1fNzPtT2FVd/WjVCdiL9qQb5k8ho3Ia8eTKea50TeMd2LZOXQmf\nmP9PrL/K3RjURTrAmk4lMcGPAAMAEvmJGW+ZZPAAAAAASUVORK5CYII="});
-others.push({"id":"http://www.yelp.com/opensearch","name":"Yelp","siteURL":"http://www.yelp.com/opensearch","host":"http://www.yelp.com","type":"suggest","queryURL":"http://www.yelp.com/search?find_desc={searchTerms}&src=opensearch","suggestionURL":"","icon":"http://media2.ak.yelpcdn.com/static/201012161623981098/img/ico/favicon.ico"});
-  //
+
   init("defaults", defaults);
-  //
   init("others", others);
 });
 

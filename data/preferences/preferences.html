@@ -7,18 +7,6 @@
   <link href="../css/bootstrap.css" rel="stylesheet">
   <link href="../css/bootstrap-responsive.css" rel="stylesheet">
 
-  <script type="text/javascript" src="../js/jquery.js"></script>
-  <script type="text/javascript" src="../js/jquery-ui-1.8.21.custom.min.js"></script>
-
-  <script type="text/javascript">
-  // This is for debugging purposes, these <scripts> are ignored by the panel loader
-  if (!self.port) {
-    self.port = { on : function(signal, callback) { }, emit : function(signal, objects) { console.log("emit", signal, objects); } };
-  }
-  </script>
-
-  <script type="text/javascript" src="preferences.js"></script>
-
   <style type="text/css">
     #content {
       position: relative;
@@ -26,39 +14,72 @@
     }
     .navbar .brand {
       float: right;
+      font-weight: bold;
     }
-    section {
-      margin: 40px 0;
+    .engines {
+      cursor: move;
     }
-    .engine {
+    #defaults, #others {
+      margin: 20px 0;
+    }
+    .engine-view {
       padding: 5px;
       border-radius: 2px;
-      border: 1px solid #eee;
+      border: 1px solid #ccc;
       margin: 5px auto;
       background-color: #fff;
-      text-align: right;
     }
-    .defaults .engine {
-      cursor: move;
+    .engine-view.ui-sortable-helper {
+      box-shadow: 4px 4px 8px #aaa;
+    }
+    #defaults .btn.add {
+      display: none;
+    }
+    #others .btn.remove {
+      display: none;
     }
     .btn {
       font-weight: bold;
       cursor: pointer;
     }
-    .icon {
-      margin: 5px;
+    img {
       vertical-align: middle;
-      cursor: move;
+    }
+    .icon {
+      margin: 0 5px;
       height: 16px;
       min-width: 16px;
     }
     .name {
       margin: 5px;
+      color: #333;
     }
     .url {
-      margin: 5px 0;
+      margin: 5px 7px;
       color: #666;
     }
+    .attributes {
+      cursor: pointer;
+    }
+    .options {
+      margin-top: 65px;
+      position: relative;
+      padding-top: 40px;
+    }
+    .options:after {
+        background-color: #F5F5F5;
+        border: 1px solid #DDDDDD;
+        border-radius: 4px 0 4px 0;
+        color: #9DA0A4;
+        content: "Options";
+        font-size: 12px;
+        font-weight: bold;
+        left: -1px;
+        padding: 3px 7px;
+        position: absolute;
+        top: -1px;
+    }
+
   </style>
 </head>
 <body>
@@ -74,22 +95,73 @@
   <div id="content" class="container">
     <div class="row">
       <div class="span6">
-        <div class="span6">
-          <h3>Searches you're using</h3>
-          <small>feel free to reorder these!</small>
+        <div class="">
+          <h4>Searches you're using</h4>
         </div>
-        <div class="defaults sections"></div>
+        <ul id="defaults" class="engines unstyled span6"></ul>
+        <div style="text-align: center;"><span class="label label-info">Reorder these, just drag and drop them</span></div>
       </div>
       <div class="span6">
-        <div class="span6">
-          <h5>Other Searches You Might Like</h5>
-          <small>these are other search engines that might be useful for you</small>
+        <div class="options well">
+          <label class="checkbox">
+            <input id="stats" checked="checked" type="checkbox"> Participate in anonymous community statistics
+          </label>
+          <label class="checkbox">
+            <input id="collect" checked="checked" type="checkbox"> Automatically collect new search engines
+          </label>
         </div>
-        <div class="others sections"></div>
+        <div class="span6">
+          <h5>More Search Sites</h5>
+          <small>Here's a list of other search engines you might find useful.</small>
+          <small>Just add them to the searches you're using if you want.</small>
+        </div>
+        <ul id="others" class="engines unstyled span6"></ul>
       </div>
     </div>
   </div>
 
+  <script type="text/template" id="engine-template">
+      <div class="engine-wrapper">
+        <button class='btn pull-right remove'>X</button>
+        <button class='btn pull-right add'>+</button>
+        <img class='icon pull-left' src="<%= get("icon") %>"/>
+        <div class="name"><%= get("name") %></div>
+        <div class="">
+          <span class="url"><%= _.trimUrl(get("queryURL")) %></span>
+          <span class="attributes">
+          <% if (_.isGeo(get("queryURL"))) { %>
+            <img title="Location base results" src="../img/Geolocation-16.png" />
+          <% } %>
+          <% if (_.isHttps(get("queryURL"))) { %>
+            <img title="Secure Connection" src="../img/identity-icons-https.png" />
+          <% } %>
+          <% if (!_.isEmpty(get("suggestionURL"))) { %>
+            <img title="Suggestions" src="../img/orion-task.png" />
+          <% } %>
+          </span>
+        </div>
+      </div>
+  </script>
+
+  <script type="text/javascript" src="../js/jquery.js"></script>
+  <script type="text/javascript" src="../js/jquery-ui-1.8.23.custom.js"></script>
+  <script type="text/javascript" src="../js/underscore.js"></script>
+  <script type="text/javascript" src="../js/backbone.js"></script>
+  <script type="text/javascript" src="../js/bootstrap-tooltip.js"></script>
+
+  <script type="text/javascript">
+  // This is for debugging purposes, these <scripts> are ignored by the panel loader
+  if (typeof self !== 'object') {
+    self = {};
+  }
+  if (typeof self.port !== 'object') {
+    self.port = { on : function(signal, callback) { return; console.log("on", signal); },
+                  emit : function(signal, objects) { return; console.log("emit", signal, objects); }
+                };
+  }
+  </script>
+
+  <script type="text/javascript" src="preferences.js"></script>
 
 </body>
 </html>
