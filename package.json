@@ -8,5 +8,19 @@
     "contributors" : [
         "James Burke"
     ],
-    "id": "jid1-wB2HoBahvZDBDQ"
+    "id": "jid1-wB2HoBahvZDBDQ",
+    "preferences": [{
+        "name": "allowStatisticsReporting",
+        "title": "Participate with the anonymouse community statistics",
+        "description": "Anonymously share statistics about the search engines you use to help improve this add-on",
+        "type": "bool",
+        "value": false
+    },
+    {
+        "name" : "allowSearchEngineCollector",
+        "title": "Automatic search engine collection",
+        "description": "Find and collect new search engines from the sites you visit",
+        "type": "bool",
+        "value": true
+    }]
 }
