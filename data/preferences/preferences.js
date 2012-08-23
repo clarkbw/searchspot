@@ -13,7 +13,42 @@ _.mixin({
   trimUrl : function(url) { return url.replace(/http(s)?:\/\/(www\.)?/,"").match(/([a-zA-Z0-9\-\.]+)\//)[0].replace(/\//,""); }
 });
 
-var Engine = Backbone.Model.extend({});
+var PortCollection = Backbone.Collection.extend({
+  initialize : function(models, options) {
+    Backbone.Model.prototype.initialize.call(this, models, options);
+    this.port = options.port;
+    ["added", "removed", "sorted", "reset"].forEach(function(target) {
+      var newtarget = [this.port,target].join(".");
+      self.port.on(newtarget, this["port_"+target].bind(this), this);
+    }.bind(this));
+    ["add", "remove"].forEach(function(target) {
+      var newtarget = [this.port,target].join(".");
+      this.bind(target, function() { self.port.emit(newtarget, _.first(arguments)); }, this);
+    }.bind(this));
+  },
+  port_reset : function(engines) {
+    console.log("port_reset", this.port, engines);
+    this.reset(engines.map(function(item) { return new Engine(item);} ));
+  },
+  port_added : function(engine) {
+    console.log("port_add", this.port, engine);
+    this.add(new Engine(engine));
+  },
+  port_removed : function(engine) {
+    console.log("port_remove", this.port, engine);
+    this.remove(new Engine(engine));
+  },
+  port_sorted : function(newOrder) {
+    console.log("port_sorted", this.port, newOrder);
+    this.comparator = function(a, b) {
+      return newOrder.indexOf(a.get("id")) > newOrder.indexOf(b.get("id"));
+    };
+    this.sort();
+    this.comparator = null;
+  }
+});
+
+var Engine = Backbone.Model;
 
 var EngineView = Backbone.View.extend({
   tagName: 'li',
@@ -24,8 +59,8 @@ var EngineView = Backbone.View.extend({
       'added' : 'added',
       'removed' : 'removed',
       // remove is bound to push the item to the other list
-      'click .btn.remove' : 'removed',
-      'click .btn.add' : 'removed'
+      'click .btn.remove' : 'swap',
+      'click .btn.add' : 'swap'
   },
   drop: function(event, index) {
     this.$el.trigger('update-sort', [this.model, index]);
@@ -36,13 +71,16 @@ var EngineView = Backbone.View.extend({
   removed: function(event) {
     this.$el.trigger('update-removed', [this.model]);
   },
+  swap: function(event) {
+    this.$el.trigger('update-swap', [this.model]);
+  },
   render: function() {
     $(this.el).html(this.template(this.model));
     return this;
   }
 });
 
-var EngineList = Backbone.Collection.extend({
+var EngineList = PortCollection.extend({
   model: Engine,
   comparator: undefined,
   append : function(model) {
@@ -50,73 +88,61 @@ var EngineList = Backbone.Collection.extend({
   }
 });
 
-var OthersEngineList = EngineList.extend({
-  comparator: function(model) {
-    return model.get('name').toLowerCase();
-  },
-});
-
 var EngineListView = Backbone.View.extend({
   initialize: function() {
     this.collection.bind('all', this.render, this);
-    this.collection.bind('add', this.add, this);
-    this.collection.bind('remove', this.remove, this);
   },
   events: {
     'update-sort': 'updateSort',
     'update-added': 'updateAdded',
-    'update-removed': 'updateRemoved'
+    'update-removed': 'updateRemoved',
+    'update-swap': 'updateSwap'
   },
   updateSort: function(event, model, position) {
     this.collection.remove(model, { silent : true });
     this.collection.add(model, { at: position, silent : true });
 
-    this.sorted();
+    self.port.emit([this.id, "sort"].join("."), this.collection.pluck('id'));
 
     this.render();
   },
   updateAdded : function(event, model, position) {
     this.collection.add(model, { at : position });
+    this.sorted();
   },
   updateRemoved : function(event, model) {
     this.collection.remove(model);
-  },
-  sorted : function() {
-    if (this.id == "defaults") {
-      self.port.emit("defaults.sort", this.collection.pluck('id'));
-    }
-  },
-  add : function(model) {
-    self.port.emit(this.id + ".add", model.toJSON());
     this.sorted();
   },
-  remove : function(model) {
-    self.port.emit(this.id + ".remove", model.toJSON());
+  updateSwap : function(event, model) {
+    this.collection.remove(model);
+    this.trigger("swap", model);
+    this.sorted();
+  },
+  sorted : function() {
+    self.port.emit([this.id, "sort"].join("."), this.collection.pluck('id'));
   },
   render: function() {
     this.$el.children().remove();
-    this.collection.each(this.appendModelView, this);
+    this.collection.each(function(model) {
+      this.$el.append(new EngineView({model: model}).render().el);
+    }, this);
     return this;
-  },
-  appendModelView: function(model) {
-    var el = new EngineView({model: model}).render().el;
-    this.$el.append(el);
-  },
+  }
 });
 
 var Application = Backbone.View.extend({
   initialize: function() {
-    this.defaults = new EngineList();
-    this.others = new OthersEngineList();
-
-    // ensure these lists are swapping back and forth for now
-    this.defaults.bind('add', this.others.remove, this.others);
-    this.defaults.bind('remove', this.others.add, this.others);
-    this.others.bind('add', this.defaults.remove, this.defaults);
-    this.others.bind('remove', this.defaults.append, this.defaults);
+    this.defaults = new EngineList([], {port:"defaults"});
+    this.others = new EngineList([], {port:"others",
+                                      comparator: function(model) { return model.get('name').toLowerCase(); }
+                                      });
 
     this.defaultsview = new EngineListView({collection:this.defaults, el : "#defaults", id : "defaults"});
     this.othersview = new EngineListView({collection:this.others, el : "#others", id : "others"});
+
+    this.defaultsview.bind("swap", this.others.add, this.others);
+    this.othersview.bind("swap", this.defaults.append, this.defaults);
 
     this.render();
   },
@@ -128,30 +154,6 @@ var Application = Backbone.View.extend({
 });
 
 var PrefsApp = new Application();
-
-self.port.on("init", function(type, engines) {
-  init(type, engines);
-});
-
-self.port.on("defaults.added", function(engine) {
-  // silent add because we don't want to bounce back a notification which will get bounced to us
-  PrefsApp.defaults.add(new Engine(engine), { silent : true });
-});
-
-self.port.on("others.added", function(engine) {
-  // silent add because we don't want to bounce back a notification which will get bounced to us
-  PrefsApp.others.add(new Engine(engine), { silent : true });
-});
-
-function init(type, engines) {
-
-  if (type === "defaults") {
-    PrefsApp.defaults.reset(engines.map(function(item) { return new Engine(item);} ));
-  } else {
-    PrefsApp.others.reset(engines.map(function(item) { return new Engine(item);} ));
-  }
-
-}
 
 self.port.on("preferences", function(prefs) {
   Object.keys(prefs).forEach(function(type) {
