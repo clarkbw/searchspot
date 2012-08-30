@@ -22,5 +22,13 @@
         "description": "Find and collect new search engines from the sites you visit",
         "type": "bool",
         "value": true
-    }]
+    },
+    {
+        "type": "control",
+        "label": "Search Preferences",
+        "name": "preferences",
+        "title": "Manage Search Engines",
+        "description" : "Manage your default search engine and other search suggestion engines available."
+    }
+    ]
 }

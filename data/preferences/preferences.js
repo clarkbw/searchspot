@@ -27,19 +27,19 @@ var PortCollection = Backbone.Collection.extend({
     }.bind(this));
   },
   port_reset : function(engines) {
-    console.log("port_reset", this.port, engines);
+    //console.log("port_reset", this.port, engines);
     this.reset(engines.map(function(item) { return new Engine(item);} ));
   },
   port_added : function(engine) {
-    console.log("port_add", this.port, engine);
+    //console.log("port_add", this.port, engine);
     this.add(new Engine(engine));
   },
   port_removed : function(engine) {
-    console.log("port_remove", this.port, engine);
+    //console.log("port_remove", this.port, engine);
     this.remove(new Engine(engine));
   },
   port_sorted : function(newOrder) {
-    console.log("port_sorted", this.port, newOrder);
+    //console.log("port_sorted", this.port, newOrder);
     this.comparator = function(a, b) {
       return newOrder.indexOf(a.get("id")) > newOrder.indexOf(b.get("id"));
     };
@@ -179,11 +179,11 @@ $(document).ready(function () {
       ui.item.trigger('drop', ui.item.index());
     },
     receive: function(event, ui) {
-      console.log("recieve", ui);
+      //console.log("recieve", ui);
       ui.item.trigger('added', ui.item.index());
     },
     remove: function(event, ui) {
-      console.log("remove", ui);
+      //console.log("remove", ui);
       ui.item.trigger('removed', ui.item.index());
     },
     connectWith: ".engines"
