@@ -6,14 +6,6 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <script type="text/javascript" src="js/jquery.js"></script>
-  <script type="text/javascript">
-  // This is for debugging purposes, these <scripts> are ignored by the panel loader
-  if (!self.port) {
-    self.port = { on : function(signal, callback) { }, emit : function(signal, objects) {}  };
-  }
-  </script>
-  <script type="text/javascript" src="results.js"></script>
 
   <title>searchspot results</title>
 
@@ -25,9 +17,11 @@
     }
 
     body {
-      font-family: "Helvetica Neue", Helvetica, Arial, Sans-serif;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
       font-size: 14px;
-      color: #222;
+      line-height: 20px;
+      color: #333333;
+      background-color: #fff;
       height: 100%;
       overflow: hidden;
       -moz-transition: all 1s; 
@@ -36,21 +30,37 @@
 
     ul, li {
       list-style: none;
+      position: relative;
     }
 
-    ul.selected {
+    .engine.focused {
       background-color: #eee;
     }
 
-    .result.selected {
+    /*  only show the name of the engine when hovering  */
+    .engine.selected .name {
+      display: inline-block;
+    }
+
+    .suggestion.focused {
       background-color: #ddd;
     }
 
-    .result:first-child {
-      color: #666;
+    .suggestion {
+      color: #333;
     }
 
-    li {
+    .suggestion.default .match {
+      color: #666;
+      font-weight: normal;
+    }
+
+    .suggestion .match {
+      font-weight: bold;
+    }
+
+    #preferences,
+    .suggestion {
       border-left: 1px solid #999;
       margin-left: 32px;
       text-decoration: none;
@@ -58,49 +68,61 @@
       cursor: pointer;
     }
 
-    li:empty {
+    .suggestion:empty {
       padding: 0;
       display: none;
     }
 
-    li span {
-      vertical-align: 15%;
-    }
-
-    .result.selected.default .terms,
-    ul.selected .search {
-      display: inline-block;
-    }
-
-    .result {
-      color: #333;
-      font-weight: light;
-    }
-
-    .search,
-    .go {
-      float: right;
+    .name {
+      position: absolute;
+      right: 4px;
+      top: 4px;
       color: #999;
       font-weight: light;
       display: none;
+      z-index: 10;
     }
 
-    #http_en_wikipedia_org_w_opensearch_desc_php .result:not(.default) > .terms {
-      font-weight: light;
-      color: #0066dd;
+    .icon {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+    }
+
+    #http_en_wikipedia_org_w_opensearch_desc_php .suggestion:not(.default) {
+      color: #0088cc;
       text-decoration: underline;
-      display: block;
     }
-
-    .url {
-      color: rgb(0, 153, 51);
-      text-decoration: none;
-      display: block;
-    }
-
   </style>
 </head>
 <body>
-  <div id="results"></div>
+  <div id="results">
+    <div id="engines"></div>
+    <ul class="preferences"><li id="preferences">Search Preferences...</li></ul>
+  </div>
+
+  <script type="text/template" id="engine-template">
+    <span class="name"><%= name %></span>
+    <img src="<%= icon %>" class="icon"/>
+  </script>
+
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/underscore.js"></script>
+  <script type="text/javascript" src="js/backbone.js"></script>
+
+  <script type="text/javascript">
+  // This is for debugging purposes, these <scripts> are ignored by the panel loader
+  if (typeof self !== 'object') {
+    self = {};
+  }
+  if (typeof self.port !== 'object') {
+    self.port = { on : function(signal, callback) { return; console.log("on", signal); },
+                  emit : function(signal, objects) { console.log("emit", signal, objects); }
+                };
+  }
+  </script>
+
+  <script type="text/javascript" src="results.js"></script>
+
 </body>
 </html>

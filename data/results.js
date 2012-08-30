@@ -13,253 +13,454 @@ function setStat(id, k, v) {
   stats[id][k] = v;
 }
 
-self.port.on("suggestions", function(engine, terms, results) {
-  //console.log("port.suggestions", engine, terms, results);
-  suggestions(engine, terms, results);
-});
+// utility function to remove the ability to select the text of the suggestions
+// http://stackoverflow.com/questions/2700000/how-to-disable-text-selection-using-jquery
+(function($){
+    $.fn.disableSelection = function() {
+        return this
+                 .attr('unselectable', 'on')
+                 .css('user-select', 'none')
+                 .on('selectstart', false);
+    };
+})($);
 
-// Add the relevant results to this engine
-// An engine could already have old results listed so this must clear those out
-function suggestions(engine, terms, results) {
-  var id = _convertEngineName(engine.id),
-      count = results.length;
-
-  // look through the results but only until our max count
-  for (var i = 0; i < results.length && i < MAX_RESULTS; i++) {
-    // Suggestion Result
-    var item = results[i];
-    //console.log("suggestions", id, item.title, terms);
-
-    // HTML Node for our result
-    var $item = $("#"+id).children(":not(.default)").slice(i, i+1);
-
-    // overwrite the contents with the new suggestion results
-    _fillResult($item, item.title, terms);
-  }
-
-  setStat(engine.id, "suggestions", Math.min(count, MAX_RESULTS));
-
-  // Clean out old results from this engine
-  while (count < MAX_RESULTS) {
-    _resetResult($("#"+id).children(":not(.default)").slice(count, count+1));
-    count++;
-  }
-
-  selectFirst();
-
-  resizePanel();
-}
-
-self.port.on("setTerms", function(terms) {
-  setTerms(terms);
-});
-
-// Called often, when new search terms are entered by the user we update
-function setTerms(terms) {
-  //console.log("setTerms", terms);
-  $("#results ul.engine li.result.default").each(function () {
-    $(this).data({"terms" : terms });
-    $(this).find("span.terms").text(terms);
-  });
-}
-
-self.port.on("setEngines", function(engines) {
-  setEngines(engines);
-});
-
-/*
- * Structure of the results
- *
- * <all-suggestions #results>
- *  <web limit="3">
- *  <shopping limit="3">
- *  <social limit="3">
- *  <local limit="3">
- *  <reference limit="3">
- *  <preferences>
- * </all-suggestions>
- *
- */
-// Called only on initialization and when there are changes to the engines
-function setEngines(engines) {
-  stats = {};
-  $("#results").empty();
-
-  engines.forEach(function (engine, i, a) {
-    var $engine = createEngine(engine);
-    if ($engine) {
-      setStat(engine.id, "engine", engine);
-      setStat(engine.id, "id", engine.id);
-      setStat(engine.id, "order", i);
-      $("#results").append($engine);
+var Suggestion = Backbone.Model.extend({
+  defaults: {
+    "focus" : false,
+    "suggestion" : "",
+    "terms" : ""
+  },
+  focus : function focus(options) {
+    options = options || {}
+    this.set("focus", true, options);
+    if (this.has("suggestion")) {
+      return this;
+    } else { // without a suggestion to offer we want to ignore this
+      return null;
     }
-  });
-
-  $("#results").append(preferences());
-
-  selectFirst();
-
-  resizePanel();
-}
-
-function selectFirst () {
-  // set the initial selection class so we have a default option selected
-  $("ul:visible:first, .result:visible:first").trigger("mouseenter");
-}
-
-function resizePanel () {
-  // This should send a height/width adjustment to our main window so the panel can be resized
-  self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
-}
-
-function createEngine (engine) {
-  var id = _convertEngineName(engine.id);
-  //console.log("suggestEngine", id, engine, engine.name, engine.id);
-  return $("<ul/>").attr({ "id" : id, "class" : "engine" })
-                   .append(
-                      $("<li/>").attr({ "class" : "result default" }).
-                                 css({ "list-style-image" : "url('" + engine.icon + "')" }).
-                                 data({ "id" : engine.id, "index" : 0 }).
-                                 append(
-                                    $("<span class='terms'/>"),
-                                    $("<span class='search'/>").text(engine.name)
-                                 ),
-                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 1 }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 2 }),
-                      $("<li/>").attr({ "class" : "result" }).data({ "id" : engine.id, "index" : 3 })
-                  );
-}
-
-function preferences () {
-  return $('<ul class="preferences"/>').
-            append(
-                  $('<li/>').attr({ "id" :"preferences"}).
-                             text("Search Preferences...").
-                             click(function () {
-                                      self.port.emit("preferences");
-                                      return false;
-                                    }
-                              )
-                  );
-}
-
-self.port.on("next", function() {
-  next();
+  },
+  blur : function blur(options) {
+    options = options || {}
+    this.set("focus", false, options);
+    return this;
+  }
 });
 
-function next() {
-  var result = $(".result.selected").next(":visible");
-   if (result.length > 0) {
-    result.trigger("mouseenter");
-    return;
-  }
-  // Then try the previous UL with an LI
-  result = $(".result.selected").parent().next().find(":visible").first();
-  if (result.length > 0) {
-    result.trigger("mouseenter");
-    return;
-  }
-}
+var Suggestions = Backbone.Collection.extend({
+  model : Suggestion,
+  initialize : function Suggestions() {
+    this.on("change:focus", this.onFocus, this);
+  },
+  onFocus : function onFocus(model, value, options) {
+    // ensure no other suggestions are keeping focus
+    if (value) {
+      this.where({focus:true}).forEach(function(m) {
+        if (model != m) {
+          m.blur();
+        }
+      });
+    }
+  },
+  getFocus : function getFocus() {
+    return this.where({focus:true})[0];
+  },
+  blur : function blur() {
+    this.where({focus:true}).forEach(function(s) {
+      s.blur();
+    });
+    return this;
+  },
+  focusNext : function focusNext() {
+    var infocus = this.getFocus(),
+        index = -1,
+        next = null;
 
-self.port.on("previous", function() {
-  previous();
+    // if nothing is focused lets focus the first item and return
+    if (infocus == null) {
+      return this.first().focus();
+    }
+
+    index = this.indexOf(infocus)+1;
+
+    if (index <= this.length) {
+      next = this.at(index);
+    }
+
+    if (next) {
+      return next.focus();
+    }
+
+    // we might be returning null here if nextfocus didn't exist
+    return next;
+
+  },
+  focusPrevious : function focusPrevious() {
+    var infocus = this.getFocus(),
+        index = -1,
+        previous = null;
+
+    // if nothing is focused lets focus the last item and return
+    if (infocus == null) {
+      return this.last().focus();
+    }
+
+    index = this.indexOf(infocus) - 1;
+
+    if (index <= this.length) {
+      previous = this.at(index);
+    }
+
+    // now lets focus the previous item
+    if (previous) {
+      return previous.focus();
+    }
+
+    // we might be returning null here if previous didn't exist
+    return previous;
+  },
+  focusLast : function focusLast() {
+    var index = this.length - 1,
+        previous = null;
+    // we have to loop up through suggestions that are invalid
+    while(index >= 0) {
+      previous = this.at(index);
+      if (previous && previous.has("suggestion")) {
+        previous.focus();
+        break;
+      }
+      index -= 1;
+    }
+  }
 });
 
-function previous() {
-  var result = $(".result.selected").prev(":visible");
-  if (result.length > 0) {
-    result.trigger("mouseenter");
-    return;
-  }
-  // Then try the previous UL with an LI
-  result = $(".result.selected").parent().prev().find(":visible").last();
-  if (result.length > 0) {
-    result.trigger("mouseenter");
-    return;
-  }
-}
+var Engine = Backbone.Model.extend({
+  defaults: {
+    "focus" : false
+  },
+  initialize : function Engine() {
+    // Only 1 default plus 3 suggestions allowed; we'll be reusing these models
+    this.suggestions = new Suggestions([new Suggestion(), new Suggestion(), new Suggestion(), new Suggestion()]);
+    this.suggestions.on("selected", this.onSuggestionsSelected, this);
 
-self.port.on("go", function() {
-  go();
+    // initialize the focus
+    this.on("change:focus", this.onFocus, this);
+  },
+  focus : function focus(options) {
+    options = options || {};
+    this.set("focus", true, options);
+    return this;
+  },
+  blur : function blur(options) {
+    options = options || {};
+    this.set("focus", false, options);
+    return this;
+  },
+  getFocus : function getFocus() {
+    return this.suggestions.getFocus();
+  },
+  focusNext : function focusNext() {
+    return this.suggestions.focusNext();
+  },
+  focusPrevious : function focusPrevious() {
+    return this.suggestions.focusPrevious();
+  },
+  setTerms : function setTerms(terms) {
+    this.suggestions.first().set({ "suggestion" : terms, "terms" : terms });
+  },
+  // the engine has received or lost focus
+  onFocus : function onFocus(model, value, options) {
+    // if we have gained focus
+    if (value) {
+      //console.log(model.get("name"), "gained focus", this.get("name"));
+      // set our new focus to the last item
+      if (typeof options.last != "undefined") {
+        this.suggestions.focusLast();
+      // set our focus to the first item
+      } else {
+        this.suggestions.first().focus();
+      }
+    // if we've lost focus clear out any things that think they still have it
+    } else {
+      //console.log(model.get("name"), "lost focus")
+      this.suggestions.blur();
+    }
+
+  },
+  onSuggestionsSelected : function onSuggestionsSelected(model, evt) {
+    var terms = model.get("suggestion"),
+        id = this.get("id");
+    setStat(id, "index",  this.suggestions.indexOf(model));
+    self.port.emit("click", { "id" : id,
+                              "terms" : terms,
+                              "stats" : stats,
+                              "tab" : (evt != null && (evt.which == 2 || (evt.metaKey || evt.ctrlKey))) } );
+  }
 });
 
-function go() {
-  $(".result.selected").click();
-}
+var Engines = Backbone.Collection.extend({
+  model : Engine,
+  initialize : function Engines(models, options) {
+    self.port.on("engines.reset", this.onEngines.bind(this), this);
+    self.port.on("terms.reset", this.onTerms.bind(this), this);
+    self.port.on("suggestions", this.onSuggestions.bind(this), this);
+    this.on("change:focus", this.onFocus, this);
+  },
+  onFocus : function onFocus(model, value, options) {
+    // ensure only 1 engine has focus
+    if (value) {
+      this.where({focus:true}).forEach(function(m) {
+        if (model != m) {
+          //console.log("blur -", m.get("name"));
+          m.blur();
+        }
+      });
+      //console.log("ASSERT", this.where({focus:true}).length == 1);
+    }
+  },
+  // returns null if no other (next) engines or suggestions can be focused
+  focusNext : function() {
+    var engine = this.getFocus(),
+        suggestion = engine.getFocus(),
+        next = engine.focusNext(),
+        index = -1,
+        other = null;
 
-// Highlight the text with the terms provided while preserving the case used
-// returns <strong>wrappers</strong> around the terms found in the text
-function highlight(text, terms) {
-  var index = text.toLowerCase().indexOf(terms.toLowerCase()),
-      pre, mid, post;
-  // the terms could not exist in the text at all
-  if (index < 0) {
-    return text;
+    // no suggestions to focus move on to other engine
+    if (next == null) {
+      index = this.indexOf(engine) + 1;
+      if (index <= this.length) {
+        other = this.at(index);
+      }
+      //console.log("next.engine", this.indexOf(engine) + 1, (other)? other.get("name") : other);
+      if (other != null) {
+        return other.focus();
+      } else { // hold our focus on the last engine
+        return engine.focus({ last : true });
+      }
+    }
+    return next;
+  },
+  focusPrevious : function() {
+    var engine = this.getFocus(),
+        suggestion = engine.getFocus(),
+        previous = engine.focusPrevious(),
+        index = -1,
+        other = null;
+
+    if (previous == null) {
+      index = this.indexOf(engine) - 1;
+      if (index <= this.length) {
+        other = this.at(index);
+      }
+      if (other != null) { // if there's an engine previous to us focus it
+        return other.focus({ last : true });
+      } else { // otherwise hold the focus on this first engine
+        return engine.focus();
+      }
+    }
+    return previous;
+  },
+  getFocus : function getFocus() {
+    return this.where({focus:true}).pop();
+  },
+  onEngines : function onEngines(engines) {
+    stats = {};
+    this.reset(engines.map(function(engine) { return new Engine(engine); }));
+    this.first().focus();
+  },
+  onTerms : function onTerms(terms) {
+    this.models.forEach(function(engine) { engine.setTerms(terms); });
+    try { this.first().focus(); } catch (ignore) { /* sometimes the list hasn't fully initialized yet */ }
+  },
+  onSuggestions : function onSuggestions(engine, terms, results) {
+    // update the (possibly) new search terms for all engines
+    var _engine = this.get(engine.id);
+    if (_engine) {
+      _engine.setTerms(terms);
+      // reset the suggestions for the engine with results
+      _engine.suggestions.rest().forEach(function(suggestion, i) {
+        if (typeof results[i] != "undefined") {
+          suggestion.set({ "suggestion" : results[i], "terms" : terms });
+        } else {
+          suggestion.clear();
+        }
+      });
+      // reset the focus
+      this.first().focus();
+      setStat(engine.id, "suggestions", Math.min(results.length, MAX_RESULTS));
+    }
+
+  },
+  comparator : undefined
+});
+
+var SuggestionView = Backbone.View.extend({
+  tagName: 'li',
+  className: 'suggestion',
+  initialize : function SuggestionView() {
+    this.model.on("change:suggestion", this.render, this);
+    this.model.on("change:focus", this.onFocus, this);
+  },
+  events: {
+    "click" : "onClick"
+  },
+  onClick : function onClick(evt) {
+    this.model.trigger("selected", this.model, evt);
+  },
+  onFocus : function onFocus(model, value, options) {
+    if (value) {
+      $("."+this.className).removeClass("focused");
+      this.$el.toggleClass("focused");
+    }
+  },
+  render : function() {
+    var suggestion = this.model.get("suggestion"),
+        terms = this.model.get("terms");
+    if (!suggestion) {
+      $(this.el).empty();
+    } else {
+      $(this.el).html(this._highlight(suggestion, terms));
+    }
+
+    if (this.model.hasChanged("suggestion")) {
+      self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+    }
+    return this;
+  },
+  // Highlight the text with the terms provided while preserving the case used
+  // returns <strong>wrappers</strong> around the terms found in the text
+  _highlight : function (text, terms) {
+    var index = text.toLowerCase().indexOf(terms.toLowerCase()),
+        pre, mid, post;
+    // the terms could not exist in the text at all
+    if (index < 0) {
+      return text;
+    }
+    pre = text.substring(0, index);
+    mid = text.substring(index, index + terms.length);
+    post = text.substring(index + terms.length, text.length);
+    return [pre, "<span class='match'>", mid, "</span>", post].join("");
+  },
+});
+
+var EngineView = Backbone.View.extend({
+  tagName: 'ul',
+  className: 'engine',
+  template: _.template($('#engine-template').html()),
+  initialize : function EngineView() {
+    this.model.on("change:focus", this.onFocus.bind(this), this);
+    // initialize our suggestion views
+    this.suggestions = this.model.suggestions.map(function(suggestion) { return new SuggestionView({model:suggestion}); });
+  },
+  onFocus : function onFocus(model, value, options) {
+    if (value) {
+      $("."+this.className).removeClass("focused");
+      this.$el.addClass("focused");
+    }
+  },
+  // only run once
+  render : function() {
+    this.$el.html(this.template(this.model.toJSON()));
+    this.suggestions.forEach(function(suggestion, i) {
+      var $el = suggestion.render().$el;
+      if (i == 0) {
+        $el.addClass("default");
+      }
+      this.$el.append($el.disableSelection());
+    }.bind(this));
+    self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+    return this;
   }
-  pre = text.substring(0, index);
-  mid = text.substring(index, index + terms.length);
-  post = text.substring(index + terms.length, text.length);
-  return [pre, "<strong>", mid, "</strong>", post].join("");
-}
+});
 
-// remove any terms from the result node
-function _resetResult($item) {
-  jQuery.removeData($item.empty(), "terms");
-}
+var EngineListView = Backbone.View.extend({
+  el : "#engines",
+  initialize: function EngineListView() {
+    this.collection.bind('reset', this.render, this);
+    $("body").bind('keydown', this.onKeyPress.bind(this));
+    self.port.on("next", this.goNext.bind(this), this);
+    self.port.on("previous", this.goPrevious.bind(this), this);
+    self.port.on("go", this.goSearch.bind(this), this);
+  },
+  onKeyPress : function onKeyPress(evt) {
+    if (evt.keyCode == 40) { // down
+      this.goNext();
+    } else if (evt.keyCode == 38) { // up
+      this.goPrevious();
+    } else if (evt.keyCode == 13) {
+      this.goSearch();
+    }
+  },
+  goNext : function goNext() {
+    var focused = this.collection.focusNext();
+    if (!focused) {
+      console.log("preferences");
+    }
+  },
+  goPrevious : function goPrevious() {
+    var focused = this.collection.focusPrevious();
+    if (!focused) {
+      console.log("!preferences");
+    }
+  },
+  goSearch : function goSearch() {
+    var engine = this.collection.getFocus(),
+        suggestion = engine.getFocus();
+    suggestion.trigger("selected", suggestion, null);
+  },
+  render: function render() {
+    stats = {};
+    this.$el.children().remove();
+    this.collection.each(function(model) {
+      var engine = new EngineView({model: model, id : model.id.replace(/[\s\W]+/g, "_") });
+      this.$el.append(engine.render().$el.disableSelection());
+    }, this);
+    self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+    return this;
+  }
+});
 
-function _fillResult($result, title, terms) {
-  $result.data({ "terms" : title }).
-          html($("<span class='terms'/>").html(highlight(title, terms)));
-}
-
-// utility function to make the engine name into a usable id
-// XXX this is not good but works *shrug*
-function _convertEngineName(engineName) {
-  return engineName.replace(/[\s\W]+/g, "_")
-}
-
-// utility function to make the search term into a slightly valid title
-// XXX this is not good but works *shrug*
-function _convertTitle(title) {
-  return title.replace(/[\s\W]+/g, "_")
-}
+var engines = new Engines();
 
 $(document).ready(function () {
 
-  $("ul").live("mouseenter", function() {
-    $("ul").removeClass("selected");
-    $(this).addClass("selected");
+  var elv = new EngineListView({collection:engines});
+
+  $("#preferences").click(function() {
+    self.port.emit("preferences");
   });
 
-  $("ul").live("mouseleave", function() {
-    $(this).removeClass("selected");
+  $(".engine").live("mouseover", function() {
+    $(".engine").removeClass("focused");
+    $(this).addClass("focused");
   });
 
-  $(".result").live("mouseenter", function() {
+  $(".suggestion").live("mouseover", function() {
     // remove all other possibly selected results
-    $(".result").removeClass("selected");
-    $(this).addClass("selected").parent().trigger("mouseenter");
+    $(".suggestion").removeClass("focused");
+    $(this).addClass("focused").parent().trigger("mouseenter");
   });
 
-  $(".result").live("mouseleave", function() {
-    $(this).removeClass("selected");
-  });
+  // We only want to continue if we're debugging
+  if (window.location.protocol != "file:") {
+    return;
+  }
 
-  $(".result").live("click", function(evt) {
-    var id = $(this).data("id");
-    setStat(id, "index",  $(this).data("index"))
-    self.port.emit("click", { "id" : id,
-                              "terms" : $(this).data("terms"),
-                              "stats" : stats,
-                              "tab" : (evt.which == 2 || (evt.metaKey || evt.ctrlKey)) } );
-    return false;
-  });
+  //window.setTimeout(function() { elv.goSearch(); }, 7 * 1000);
 
-  $("body").keydown(function(e) {
-    if (e.keyCode == 40) {
-      next();
-    } else if (e.keyCode == 38) {
-      previous();
-    }
-  });
+  var test_engines = [{"id":"https://www.google.com/","name":"Google","siteURL":"https://www.google.com/","host":"https:/www.google.com/","queryURL":"https://www.google.com/search?q={searchTerms}&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a","suggestionURL":"https://www.google.com/complete/search?client=firefox&q={searchTerms}","icon":"data:image/png;base64,AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADs9Pt8xetPtu9FsfFNtu%2BTzvb2%2B%2Fne4dFJeBw0egA%2FfAJAfAA8ewBBegAAAAD%2B%2FPtft98Mp%2BwWsfAVsvEbs%2FQeqvF8xO7%2F%2F%2F63yqkxdgM7gwE%2FggM%2BfQA%2BegBDeQDe7PIbotgQufcMufEPtfIPsvAbs%2FQvq%2Bfz%2Bf%2F%2B%2B%2FZKhR05hgBBhQI8hgBAgAI9ewD0%2B%2Fg3pswAtO8Cxf4Kw%2FsJvvYAqupKsNv%2B%2Fv7%2F%2FP5VkSU0iQA7jQA9hgBDgQU%2BfQH%2F%2Ff%2FQ6fM4sM4KsN8AteMCruIqqdbZ7PH8%2Fv%2Fg6Nc%2Fhg05kAA8jAM9iQI%2BhQA%2BgQDQu6b97uv%2F%2F%2F7V8Pqw3eiWz97q8%2Ff%2F%2F%2F%2F7%2FPptpkkqjQE4kwA7kAA5iwI8iAA8hQCOSSKdXjiyflbAkG7u2s%2F%2B%2F%2F39%2F%2F7r8utrqEYtjQE8lgA7kwA7kwA9jwA9igA9hACiWSekVRyeSgiYSBHx6N%2F%2B%2Fv7k7OFRmiYtlAA5lwI7lwI4lAA7kgI9jwE9iwI4iQCoVhWcTxCmb0K%2BooT8%2Fv%2F7%2F%2F%2FJ2r8fdwI1mwA3mQA3mgA8lAE8lAE4jwA9iwE%2BhwGfXifWvqz%2B%2Ff%2F58u%2Fev6Dt4tr%2B%2F%2F2ZuIUsggA7mgM6mAM3lgA5lgA6kQE%2FkwBChwHt4dv%2F%2F%2F728ei1bCi7VAC5XQ7kz7n%2F%2F%2F6bsZkgcB03lQA9lgM7kwA2iQktZToPK4r9%2F%2F%2F9%2F%2F%2FSqYK5UwDKZAS9WALIkFn%2B%2F%2F3%2F%2BP8oKccGGcIRJrERILYFEMwAAuEAAdX%2F%2Ff7%2F%2FP%2B%2BfDvGXQLIZgLEWgLOjlf7%2F%2F%2F%2F%2F%2F9QU90EAPQAAf8DAP0AAfMAAOUDAtr%2F%2F%2F%2F7%2B%2Fu2bCTIYwDPZgDBWQDSr4P%2F%2Fv%2F%2F%2FP5GRuABAPkAA%2FwBAfkDAPAAAesAAN%2F%2F%2B%2Fz%2F%2F%2F64g1C5VwDMYwK8Yg7y5tz8%2Fv%2FV1PYKDOcAAP0DAf4AAf0AAfYEAOwAAuAAAAD%2F%2FPvi28ymXyChTATRrIb8%2F%2F3v8fk6P8MAAdUCAvoAAP0CAP0AAfYAAO4AAACAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAA"},{"id":"http://d2lo25i6d3q8zm.cloudfront.net/browser-plugins/AmazonSearchSuggestionsOSD.Firefox.xml","name":"Amazon.com","siteURL":"http://d2lo25i6d3q8zm.cloudfront.net/browser-plugins/AmazonSearchSuggestionsOSD.Firefox.xml","host":"http://d2lo25i6d3q8zm.cloudfront.net","queryURL":"http://www.amazon.com/exec/obidos/external-search/?field-keywords={searchTerms}&mode=blended&tag=mozilla-20&sourceid=Mozilla-search","suggestionURL":"http://completion.amazon.com/search/complete?method=completion&search-alias=aps&mkt=1&q={searchTerms}","icon":"data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHgSURBVHjalFM9TNtQEP4cB7PwM1RITUXIgsRaYEEVEyKZwhiyZAQyd0BhpFOlIjoBqhjSqVQMoVMLLAjEwECCQJkSkBqJYDOAFOMKFSf28d7DTUxiUDnp/Pzeu/vuu7t3ICKF6SLTMv2/lB0fRWKfjwDm4JJisYh0Oo3fpZLYT0SjSCQS8JAFMADNDZ3NZsnf1taiqVTKi4nGASruk5lkkmTmMB6JUKFQqO+DfX1eABWeQoVR6f7HSdM0obqu48Yw8G1tDT82NsRd1TSbU9BbGPCog8PDj+jLzurFoAVgMh4XxoNDQ6SqKi0tL9eBvAB8zZwymYxYY7EYAoEA8vm82BNTg6XUIs0MeGTZoR1mhXSnwNl4pmAbjU7mcjkKhkL1ynMnntZ4OEw3VyrV8utk7s5TdW++0QXz+1i3P7IK36t+PCfVn1OQOoOA0gXr5DPak+cPXbBK+/T3S69AtY3LJ98vZ1or/iLr+pTuvr59/A6s003UdqZFJF/PCKQ3o5CUznoBST2AfbEF/9iqYEDaIfwj73VJPEfgNTe0tWNYR0uwy9uOW0OkrgHI7z5ADo2C7v48nLV3XHKAT+x/1m1sX58xsBxg8rZJrDYD8DHHp4aJj/MK09sXjPOt46PcCzAACXY8/u34wN0AAAAASUVORK5CYII="},{"id":"http://en.wikipedia.org/w/opensearch_desc.php","name":"Wikipedia (en)","siteURL":"http://en.wikipedia.org/w/opensearch_desc.php","host":"http://en.wikipedia.org","queryURL":"http://en.wikipedia.org/wiki/Special:Search?search={searchTerms}&sourceid=Mozilla-search","suggestionURL":"http://en.wikipedia.org/w/api.php?action=opensearch&search={searchTerms}","icon":"data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAEAgQAhIOEAMjHyABIR0gA6ejpAGlqaQCpqKkAKCgoAPz9%2FAAZGBkAmJiYANjZ2ABXWFcAent6ALm6uQA8OjwAiIiIiIiIiIiIiI4oiL6IiIiIgzuIV4iIiIhndo53KIiIiB%2FWvXoYiIiIfEZfWBSIiIEGi%2FfoqoiIgzuL84i9iIjpGIoMiEHoiMkos3FojmiLlUipYliEWIF%2BiDe0GoRa7D6GPbjcu1yIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}];
+  engines.onEngines(test_engines);
+
+  engines.onTerms("ram");
+
+  var test_suggestion_wiki =  { "engine" : {"id":"http://en.wikipedia.org/w/opensearch_desc.php","name":"Wikipedia (en)","siteURL":"http://en.wikipedia.org/w/opensearch_desc.php","host":"http://en.wikipedia.org","queryURL":"http://en.wikipedia.org/wiki/Special:Search?search={searchTerms}&sourceid=Mozilla-search","suggestionURL":"http://en.wikipedia.org/w/api.php?action=opensearch&search={searchTerms}","icon":"data:image/x-icon;base64,AAABAAEAEBAQAAEABAAoAQAAFgAAACgAAAAQAAAAIAAAAAEABAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAEAgQAhIOEAMjHyABIR0gA6ejpAGlqaQCpqKkAKCgoAPz9%2FAAZGBkAmJiYANjZ2ABXWFcAent6ALm6uQA8OjwAiIiIiIiIiIiIiI4oiL6IiIiIgzuIV4iIiIhndo53KIiIiB%2FWvXoYiIiIfEZfWBSIiIEGi%2FfoqoiIgzuL84i9iIjpGIoMiEHoiMkos3FojmiLlUipYliEWIF%2BiDe0GoRa7D6GPbjcu1yIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}, "term" : "ram", "results" : ["RAM", "Ramen","Rammstein","Rambo","Ramen Noodles","Ramekins"] };
+
+  window.setTimeout(function() {   engines.onSuggestions(test_suggestion_wiki.engine, test_suggestion_wiki.term, test_suggestion_wiki.results); }, 1 * 900);
+
+  var test_suggestion_amazon = { "engine" : {"id":"http://d2lo25i6d3q8zm.cloudfront.net/browser-plugins/AmazonSearchSuggestionsOSD.Firefox.xml","name":"Amazon.com","siteURL":"http://d2lo25i6d3q8zm.cloudfront.net/browser-plugins/AmazonSearchSuggestionsOSD.Firefox.xml","host":"http://d2lo25i6d3q8zm.cloudfront.net","queryURL":"http://www.amazon.com/exec/obidos/external-search/?field-keywords={searchTerms}&mode=blended&tag=mozilla-20&sourceid=Mozilla-search","suggestionURL":"http://completion.amazon.com/search/complete?method=completion&search-alias=aps&mkt=1&q={searchTerms}","icon":"data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAHgSURBVHjalFM9TNtQEP4cB7PwM1RITUXIgsRaYEEVEyKZwhiyZAQyd0BhpFOlIjoBqhjSqVQMoVMLLAjEwECCQJkSkBqJYDOAFOMKFSf28d7DTUxiUDnp/Pzeu/vuu7t3ICKF6SLTMv2/lB0fRWKfjwDm4JJisYh0Oo3fpZLYT0SjSCQS8JAFMADNDZ3NZsnf1taiqVTKi4nGASruk5lkkmTmMB6JUKFQqO+DfX1eABWeQoVR6f7HSdM0obqu48Yw8G1tDT82NsRd1TSbU9BbGPCog8PDj+jLzurFoAVgMh4XxoNDQ6SqKi0tL9eBvAB8zZwymYxYY7EYAoEA8vm82BNTg6XUIs0MeGTZoR1mhXSnwNl4pmAbjU7mcjkKhkL1ynMnntZ4OEw3VyrV8utk7s5TdW++0QXz+1i3P7IK36t+PCfVn1OQOoOA0gXr5DPak+cPXbBK+/T3S69AtY3LJ98vZ1or/iLr+pTuvr59/A6s003UdqZFJF/PCKQ3o5CUznoBST2AfbEF/9iqYEDaIfwj73VJPEfgNTe0tWNYR0uwy9uOW0OkrgHI7z5ADo2C7v48nLV3XHKAT+x/1m1sX58xsBxg8rZJrDYD8DHHp4aJj/MK09sXjPOt46PcCzAACXY8/u34wN0AAAAASUVORK5CYII="}, "term" : "ram", "results" : [] }; //"ramen","rammstein","rambo","ramen noodles","ramekins","ram mount","ramones","rambo knife","ramps"
+  engines.onSuggestions(test_suggestion_amazon.engine, test_suggestion_amazon.term, test_suggestion_amazon.results);
+  var test_suggestion_google = { "engine" : {"id":"https://www.google.com/","name":"Google","siteURL":"https://www.google.com/","host":"https:/www.google.com/","queryURL":"https://www.google.com/search?q={searchTerms}&ie=utf-8&oe=utf-8&aq=t&rls=org.mozilla:en-US:official&client=firefox-a","suggestionURL":"https://www.google.com/complete/search?client=firefox&q={searchTerms}","icon":"data:image/png;base64,AAABAAEAEBAAAAEAGABoAwAAFgAAACgAAAAQAAAAIAAAAAEAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADs9Pt8xetPtu9FsfFNtu%2BTzvb2%2B%2Fne4dFJeBw0egA%2FfAJAfAA8ewBBegAAAAD%2B%2FPtft98Mp%2BwWsfAVsvEbs%2FQeqvF8xO7%2F%2F%2F63yqkxdgM7gwE%2FggM%2BfQA%2BegBDeQDe7PIbotgQufcMufEPtfIPsvAbs%2FQvq%2Bfz%2Bf%2F%2B%2B%2FZKhR05hgBBhQI8hgBAgAI9ewD0%2B%2Fg3pswAtO8Cxf4Kw%2FsJvvYAqupKsNv%2B%2Fv7%2F%2FP5VkSU0iQA7jQA9hgBDgQU%2BfQH%2F%2Ff%2FQ6fM4sM4KsN8AteMCruIqqdbZ7PH8%2Fv%2Fg6Nc%2Fhg05kAA8jAM9iQI%2BhQA%2BgQDQu6b97uv%2F%2F%2F7V8Pqw3eiWz97q8%2Ff%2F%2F%2F%2F7%2FPptpkkqjQE4kwA7kAA5iwI8iAA8hQCOSSKdXjiyflbAkG7u2s%2F%2B%2F%2F39%2F%2F7r8utrqEYtjQE8lgA7kwA7kwA9jwA9igA9hACiWSekVRyeSgiYSBHx6N%2F%2B%2Fv7k7OFRmiYtlAA5lwI7lwI4lAA7kgI9jwE9iwI4iQCoVhWcTxCmb0K%2BooT8%2Fv%2F7%2F%2F%2FJ2r8fdwI1mwA3mQA3mgA8lAE8lAE4jwA9iwE%2BhwGfXifWvqz%2B%2Ff%2F58u%2Fev6Dt4tr%2B%2F%2F2ZuIUsggA7mgM6mAM3lgA5lgA6kQE%2FkwBChwHt4dv%2F%2F%2F728ei1bCi7VAC5XQ7kz7n%2F%2F%2F6bsZkgcB03lQA9lgM7kwA2iQktZToPK4r9%2F%2F%2F9%2F%2F%2FSqYK5UwDKZAS9WALIkFn%2B%2F%2F3%2F%2BP8oKccGGcIRJrERILYFEMwAAuEAAdX%2F%2Ff7%2F%2FP%2B%2BfDvGXQLIZgLEWgLOjlf7%2F%2F%2F%2F%2F%2F9QU90EAPQAAf8DAP0AAfMAAOUDAtr%2F%2F%2F%2F7%2B%2Fu2bCTIYwDPZgDBWQDSr4P%2F%2Fv%2F%2F%2FP5GRuABAPkAA%2FwBAfkDAPAAAesAAN%2F%2F%2B%2Fz%2F%2F%2F64g1C5VwDMYwK8Yg7y5tz8%2Fv%2FV1PYKDOcAAP0DAf4AAf0AAfYEAOwAAuAAAAD%2F%2FPvi28ymXyChTATRrIb8%2F%2F3v8fk6P8MAAdUCAvoAAP0CAP0AAfYAAO4AAACAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQAA"}, "term" : "ram", "results" : ["ramadan","ramadan 2012","rampart"] };
+
+  window.setTimeout(function() { engines.onSuggestions(test_suggestion_google.engine, test_suggestion_google.term, test_suggestion_google.results); }, 1 * 1000);
+
 });
