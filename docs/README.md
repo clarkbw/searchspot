@@ -1,7 +1,6 @@
-
 ## Privacy
 
-I've included an initial privacy policy that I'm using, this is not official and needs lots of work but I wanted to start somewhere.
+I've included an initial [privacy policy](https://github.com/clarkbw/searchspot/blob/master/docs/PRIVACY.txt) that I'm using, this is not official and needs lots of work but I wanted to start somewhere.
 
 ## Vendor
 
