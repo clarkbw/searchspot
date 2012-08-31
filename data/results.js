@@ -118,18 +118,26 @@ var Suggestions = Backbone.Collection.extend({
     // we might be returning null here if previous didn't exist
     return previous;
   },
-  focusLast : function focusLast() {
+  getLast : function getLast() {
     var index = this.length - 1,
         previous = null;
     // we have to loop up through suggestions that are invalid
     while(index >= 0) {
       previous = this.at(index);
       if (previous && previous.has("suggestion")) {
-        previous.focus();
+        return previous;
         break;
       }
       index -= 1;
     }
+    return previous;
+  },
+  focusLast : function focusLast() {
+    var last = this.getLast();
+    if (last != null) {
+      last.focus();
+    }
+    return last;
   }
 });
 
@@ -148,7 +156,10 @@ var Engine = Backbone.Model.extend({
   focus : function focus(options) {
     options = options || {};
     this.set("focus", true, options);
-    return this;
+    if (typeof options.last == "undefined") {
+      return this.suggestions.first();
+    }
+    return this.suggestions.getLast();
   },
   blur : function blur(options) {
     options = options || {};
@@ -214,7 +225,6 @@ var Engines = Backbone.Collection.extend({
           m.blur();
         }
       });
-      //console.log("ASSERT", this.where({focus:true}).length == 1);
     }
   },
   // returns null if no other (next) engines or suggestions can be focused
@@ -265,7 +275,11 @@ var Engines = Backbone.Collection.extend({
   },
   onEngines : function onEngines(engines) {
     stats = {};
-    this.reset(engines.map(function(engine) { return new Engine(engine); }));
+    this.reset(engines.map(function(engine, i) {
+      setStat(engine.id, "id", engine.id);
+      setStat(engine.id, "order", i);
+      return new Engine(engine);
+    }));
     this.first().focus();
   },
   onTerms : function onTerms(terms) {
@@ -393,14 +407,14 @@ var EngineListView = Backbone.View.extend({
   },
   goNext : function goNext() {
     var focused = this.collection.focusNext();
-    if (!focused) {
-      console.log("preferences");
+    if (focused != null && focused.has("suggestion")) {
+      self.port.emit("terms", focused.get("suggestion"));
     }
   },
   goPrevious : function goPrevious() {
     var focused = this.collection.focusPrevious();
-    if (!focused) {
-      console.log("!preferences");
+    if (focused != null && focused.has("suggestion")) {
+      self.port.emit("terms", focused.get("suggestion"));
     }
   },
   goSearch : function goSearch() {
@@ -409,7 +423,6 @@ var EngineListView = Backbone.View.extend({
     suggestion.trigger("selected", suggestion, null);
   },
   render: function render() {
-    stats = {};
     this.$el.children().remove();
     this.collection.each(function(model) {
       var engine = new EngineView({model: model, id : model.id.replace(/[\s\W]+/g, "_") });
