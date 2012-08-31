@@ -1,25 +1,25 @@
 {
   "configs": {
-    "ffdev": ["-b", "/Applications/Mozilla/Firefox.app/Contents/MacOS/firefox",
+    "ffdev": ["-b", "/Applications/Firefox.app/Contents/MacOS/firefox",
              "-p", "~/Library/Application Support/Firefox/Profiles/pjymmt6x.dev"],
-    "auroradev": ["-b", "/Applications/Mozilla/Aurora.app/Contents/MacOS/firefox",
+    "auroradev": ["-b", "/Applications/Aurora.app/Contents/MacOS/firefox",
                    "-p", "~/Library/Application Support/Firefox/Profiles/pjymmt6x.dev"],
-    "nightlydev": ["-b", "/Applications/Mozilla/FirefoxNightly.app/Contents/MacOS/firefox",
+    "nightlydev": ["-b", "/Applications/FirefoxNightly.app/Contents/MacOS/firefox",
                    "-p", "~/Library/Application Support/Firefox/Profiles/pjymmt6x.dev"],
-    "ffdefault": ["-b", "/Applications/Mozilla/Firefox.app/Contents/MacOS/firefox",
+    "ffdefault": ["-b", "/Applications/Firefox.app/Contents/MacOS/firefox",
              "-p", "~/Library/Application Support/Firefox/Profiles/i1nhznc2.default"],
-    "auroradefault": ["-b", "/Applications/Mozilla/Aurora.app/Contents/MacOS/firefox",
+    "auroradefault": ["-b", "/Applications/Aurora.app/Contents/MacOS/firefox",
                    "-p", "~/Library/Application Support/Firefox/Profiles/i1nhznc2.default"],
-    "nightlydefault": ["-b", "/Applications/Mozilla/FirefoxNightly.app/Contents/MacOS/firefox",
+    "nightlydefault": ["-b", "/Applications/FirefoxNightly.app/Contents/MacOS/firefox",
                    "-p", "~/Library/Application Support/Firefox/Profiles/i1nhznc2.default"],
-    "ffnew": ["-b", "/Applications/Mozilla/Firefox.app/Contents/MacOS/firefox",
+    "ffnew": ["-b", "/Applications/Firefox.app/Contents/MacOS/firefox",
              "--static-args", "{ \"debug\" : \"true\"}"],
-    "auroranew": ["-b", "/Applications/Mozilla/Aurora.app/Contents/MacOS/firefox",
+    "auroranew": ["-b", "/Applications/Aurora.app/Contents/MacOS/firefox",
                    "--static-args", "{ \"debug\" : \"true\"}"],
-    "nightlynew": ["-b", "/Applications/Mozilla/FirefoxNightly.app/Contents/MacOS/firefox",
+    "nightlynew": ["-b", "/Applications/FirefoxNightly.app/Contents/MacOS/firefox",
                    "--static-args", "{ \"debug\" : \"true\"}"],
-    "fftest": ["-b", "/Applications/Mozilla/Firefox.app/Contents/MacOS/firefox"],
-    "auroratest": ["-b", "/Applications/Mozilla/Aurora.app/Contents/MacOS/firefox"],
-    "nightlytest": ["-b", "/Applications/Mozilla/FirefoxNightly.app/Contents/MacOS/firefox"]
+    "fftest": ["-b", "/Applications/Firefox.app/Contents/MacOS/firefox"],
+    "auroratest": ["-b", "/Applications/Aurora.app/Contents/MacOS/firefox"],
+    "nightlytest": ["-b", "/Applications/FirefoxNightly.app/Contents/MacOS/firefox"]
   }
 }
