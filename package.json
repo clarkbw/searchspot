@@ -8,6 +8,14 @@
     "contributors" : [
         "James Burke"
     ],
+    "repository": {
+        "type" : "git",
+        "url" : "https://github.com/clarkbw/searchspot.git",
+        "web": "https://github.com/clarkbw/searchspot"
+    },
+   "bugs": {
+        "web": "https://github.com/clarkbw/searchspot/issues"
+    },
     "id": "jid1-wB2HoBahvZDBDQ",
     "preferences": [{
         "name": "allowStatisticsReporting",
