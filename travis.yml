@@ -1,0 +1,13 @@
+# travis-ci mozilla-addon-sdk yaml
+# via http://www.theautomatedtester.co.uk/blog/2012/using-travis-ci-for-building-and-testing-firefox-addons.html
+language: node_js
+    before_script:
+       - sh -e /etc/init.d/xvfb start
+       - git submodule update --init
+       - cd .addon-sdk
+       - . bin/activate
+       - cd ../
+    env:
+      - DISPLAY=':99.0'
+
+    script: cfx test
