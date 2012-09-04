@@ -5,13 +5,11 @@ env:
   - DISPLAY=:99.0
 before_script:
   - export DISPLAY=:99.0
-  - sh -e /etc/init.d/xvfb start
+  - sh /usr/bin/Xvfb :0 -auth /etc/X99.cfg -screen 0 1024x768x24 -fbdir /var/lib/xvfb -extension RANDR &
   - git submodule update --init --recursive
   - cd .addon-sdk
   - . bin/activate
   - cd ../
-  - sleep 5
 
 script:
-  - cat /etc/init.d/xvfb
   - cfx test
