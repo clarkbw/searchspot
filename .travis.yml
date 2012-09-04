@@ -4,8 +4,8 @@ language: node_js
 env:
   - DISPLAY=:99.0
 before_script:
-  - export DISPLAY=:99.0
-  - sh /usr/bin/Xvfb :0 -auth /etc/X99.cfg -screen 0 1024x768x24 -fbdir /var/lib/xvfb -extension RANDR &
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start -extension RANDR"
   - git submodule update --init --recursive
   - cd .addon-sdk
   - . bin/activate
