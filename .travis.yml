@@ -5,7 +5,7 @@ env:
   - DISPLAY=:99.0
 before_script:
   - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start -extension RANDR"
+  - "xvfb-run --server-num=99 --server-args='-extension RANDR'"
   - git submodule update --init --recursive
   - cd .addon-sdk
   - . bin/activate
