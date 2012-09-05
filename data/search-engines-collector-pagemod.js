@@ -8,16 +8,22 @@
 // title : "Google Search",
 // engine : "/google.xml" }
 
+var links = null, i = null, results = [];
 
-var links = document.querySelectorAll("link[rel=search][type='application/opensearchdescription+xml']");
+links = document.querySelectorAll("link[rel=search][type='application/opensearchdescription+xml']");
 //console.log(links);
-var results = [];
+
 //console.log("site", document.URL);
-for (var i in links) {
-  var title = links[i].getAttribute("title");
-  //console.log("title", title);
-  var href = links[i].getAttribute("href");
-  //console.log("href", href);
-  results.push({ site : document.URL, name : title, opensearch : href });
+for (i in links) {
+  if (links[i] && typeof links[i].getAttribute !== "undefined") {
+    var title = links[i].getAttribute("title");
+    var href = links[i].getAttribute("href");
+    if (title && href) {
+      results.push({ site : document.URL, name : title, opensearch : href });
+    }
+  }
+
 }
-self.postMessage(results);
+if (results.length > 0) {
+  self.postMessage(results);
+}
