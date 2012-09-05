@@ -3,9 +3,10 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { components } = require("chrome");
-const BinaryOutputStream = components.Constructor("@mozilla.org/binaryoutputstream;1", "nsIBinaryOutputStream", "setOutputStream");
-const BinaryInputStream = components.Constructor("@mozilla.org/binaryinputstream;1", "nsIBinaryInputStream", "setInputStream");
+const { CC } = require("chrome");
+const BinaryInputStream = CC("@mozilla.org/binaryinputstream;1",
+                           "nsIBinaryInputStream",
+                           "setInputStream");
 const { StatisticsReporter } = require("statistics"),
       { SearchEngines, SearchEngine } = require("search-engines");
 
