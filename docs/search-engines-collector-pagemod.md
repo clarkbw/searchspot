@@ -3,7 +3,7 @@
    - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
 
 The `search-engines-collector-pagemod` module is a simple 
-[page-mod](packages/addon-kit/page-mod.html) for finding Open Search link
+[page-mod](/mozilla/addon-sdk/blob/master/packages/addon-kit/docs/page-mod.md) for finding Open Search link
 references within a page.
 
 The module looks at all pages for `link` elements with the attributes
