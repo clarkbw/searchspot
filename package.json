@@ -4,7 +4,7 @@
     "description" : "Search suggestions from multiple search engines to get you answers faster",
     "license": "MPL 2.0",
     "author": "Bryan Clark (http://clarkbw.net/) <clarkbw@gmail.com>",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "contributors" : [
         "James Burke"
     ],
@@ -19,7 +19,7 @@
     "id": "jid1-wB2HoBahvZDBDQ",
     "preferences": [{
         "name": "allowStatisticsReporting",
-        "title": "Participate with the anonymouse community statistics",
+        "title": "Participate with the anonymous community statistics",
         "description": "Anonymously share statistics about the search engines you use to help improve this add-on",
         "type": "bool",
         "value": false
