@@ -119,7 +119,7 @@ exports.testCollectorFoursquare = function(test) {
     SearchEnginesCollector.removeListener("engine", onCollectorFoursquare);
 
     test.assertEqual(collected.name, "foursquare", "FourSquare name is correct");
-    test.assertEqual(collected.queryURL,"https://foursquare.com/search?q={searchTerms}", "FourSquare Query URL is correct");
+    test.assertEqual(collected.queryURL,"https://foursquare.com/search?q={searchTerms}&extra=lots", "FourSquare Query URL is correct");
     test.assertEqual(collected.suggestionURL,"", "FourSquare Suggestion URL is empty");
     test.assertEqual(collected.icon,"https://foursquare.com/favicon.ico", "FourSquare icon is correct");
 

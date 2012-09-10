@@ -6,6 +6,7 @@
   <Image height="16" width="16" type="image/x-icon">https://foursquare.com/favicon.ico</Image>
 	<Url type="text/html" method="get" template="https://foursquare.com/search">
 		<Param name="q" value="{searchTerms}"/>
+		<Param name="extra" value="lots"/>
 	</Url>
 	<moz:SearchForm>https://foursquare.com/search</moz:SearchForm>
 </OpenSearchDescription>
