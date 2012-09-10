@@ -80,7 +80,13 @@
         position: absolute;
         top: -1px;
     }
-
+    .footer {
+      padding: 70px 0px;
+      margin-top: 70px;
+      border-top: 1px solid rgb(229, 229, 229);
+      background-color: rgb(245, 245, 245);
+      text-align: center;
+    }
   </style>
 </head>
 <body>
@@ -111,7 +117,7 @@
             <input id="collect" checked="checked" type="checkbox"> Automatically collect new search engines
           </label>
         </div>
-        <div class="span6">
+        <div>
           <h5>More Search Sites</h5>
           <small>Here's a list of other search engines you might find useful.</small>
           <small>Just add them to the searches you're using if you want.</small>
@@ -120,6 +126,13 @@
       </div>
     </div>
   </div>
+
+  <footer class="footer">
+    <div class="container">
+      <p>The <a href="https://addons.mozilla.org/en-US/firefox/addon/awesome-search/">Awesome Search</a> add-on was designed and built by <a href="http://clarkbw.net/">Bryan Clark</a>.  Thank you for using it.</p>
+      <p><a href="https://github.com/clarkbw/searchspot/blob/master/docs/PRIVACY.txt">Privacy Policy</a></p>
+    </div>
+  </footer>
 
   <script type="text/template" id="engine-template">
       <div class="engine-wrapper">
