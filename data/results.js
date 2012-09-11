@@ -2,7 +2,31 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const MAX_RESULTS = 3;
+/*jshint forin:true, noarg:true, noempty:true, eqeqeq:true, bitwise:true,
+  strict:true, undef:true, curly:true, browser:true, es5:true,
+  indent:2, maxerr:50, devel:true, node:true, boss:true, white:true,
+  globalstrict:true, nomen:false, newcap:true*/
+
+/*global self:true, addon:true */
+
+'use strict';
+
+// catch debug running the panel HTML directly from a browser
+if (typeof self === "undefined") {
+  self = {};
+}
+
+if (typeof self.port === "undefined") {
+  self.port = { on : function (signal, callback) { },
+                emit : function (signal, objects) { }
+              };
+}
+
+// this is the proposed secure scripts port object
+if (typeof addon === "undefined") {
+  var addon = self;
+}
+
 // hold our stats data, should be reset on setEngines
 var stats = {};
 
@@ -15,15 +39,19 @@ function setStat(id, k, v) {
 
 // utility function to remove the ability to select the text of the suggestions
 // http://stackoverflow.com/questions/2700000/how-to-disable-text-selection-using-jquery
-(function($){
-    $.fn.disableSelection = function() {
-        return this
-                 .attr('unselectable', 'on')
-                 .css('user-select', 'none')
-                 .on('selectstart', false);
-    };
-})($);
+(function ($) {
+    $.fn.disableSelection = function () {
+        return this.attr('unselectable', 'on')
+                   .css('user-select', 'none')
+                   .on('selectstart', false);
+      };
+  }($)
+);
 
+/**
+ * Base suggestion object.  Contains the original "terms" and "suggestion" which
+ * it represents.
+ */
 var Suggestion = Backbone.Model.extend({
   defaults: {
     "focus" : false,
@@ -31,7 +59,7 @@ var Suggestion = Backbone.Model.extend({
     "terms" : ""
   },
   focus : function focus(options) {
-    options = options || {}
+    options = options || {};
     this.set("focus", true, options);
     if (this.has("suggestion")) {
       return this;
@@ -40,12 +68,18 @@ var Suggestion = Backbone.Model.extend({
     }
   },
   blur : function blur(options) {
-    options = options || {}
+    options = options || {};
     this.set("focus", false, options);
     return this;
+  },
+  equals : function equals(model) {
+    return this.cid === model.cid;
   }
 });
 
+/**
+ * List of suggestions is mostly for managing focus
+ */
 var Suggestions = Backbone.Collection.extend({
   model : Suggestion,
   initialize : function Suggestions() {
@@ -54,39 +88,39 @@ var Suggestions = Backbone.Collection.extend({
   onFocus : function onFocus(model, value, options) {
     // ensure no other suggestions are keeping focus
     if (value) {
-      this.where({focus:true}).forEach(function(m) {
-        if (model != m) {
+      this.where({focus: true}).forEach(function (m) {
+        if (!model.equals(m)) {
           m.blur();
         }
       });
     }
   },
   getFocus : function getFocus() {
-    return this.where({focus:true})[0];
+    return this.where({focus: true}).pop();
   },
   blur : function blur() {
-    this.where({focus:true}).forEach(function(s) {
+    this.where({focus: true}).forEach(function (s) {
       s.blur();
     });
     return this;
   },
   focusNext : function focusNext() {
     var infocus = this.getFocus(),
-        index = -1,
+        index = this.length,
         next = null;
 
     // if nothing is focused lets focus the first item and return
-    if (infocus == null) {
+    if (infocus === null) {
       return this.first().focus();
     }
 
-    index = this.indexOf(infocus)+1;
+    index = this.indexOf(infocus) + 1;
 
-    if (index <= this.length) {
+    if (index < this.length) {
       next = this.at(index);
     }
 
-    if (next) {
+    if (next !== null) {
       return next.focus();
     }
 
@@ -100,18 +134,18 @@ var Suggestions = Backbone.Collection.extend({
         previous = null;
 
     // if nothing is focused lets focus the last item and return
-    if (infocus == null) {
+    if (infocus === null) {
       return this.last().focus();
     }
 
     index = this.indexOf(infocus) - 1;
 
-    if (index <= this.length) {
+    if (index >= 0) {
       previous = this.at(index);
     }
 
     // now lets focus the previous item
-    if (previous) {
+    if (previous !== null) {
       return previous.focus();
     }
 
@@ -122,11 +156,10 @@ var Suggestions = Backbone.Collection.extend({
     var index = this.length - 1,
         previous = null;
     // we have to loop up through suggestions that are invalid
-    while(index >= 0) {
+    while (index >= 0) {
       previous = this.at(index);
       if (previous && previous.has("suggestion")) {
         return previous;
-        break;
       }
       index -= 1;
     }
@@ -134,20 +167,28 @@ var Suggestions = Backbone.Collection.extend({
   },
   focusLast : function focusLast() {
     var last = this.getLast();
-    if (last != null) {
+    if (last !== null) {
       last.focus();
     }
     return last;
   }
 });
 
+/**
+ * Engine model represents a search engine holding 4 possible suggestions of
+ * which 1 is the default terms.
+ *
+ * Most of the Model code handles focus of suggestions and emitting the
+ * selection of a suggestions through a mouse click or keyboard action
+ */
 var Engine = Backbone.Model.extend({
   defaults: {
     "focus" : false
   },
   initialize : function Engine() {
     // Only 1 default plus 3 suggestions allowed; we'll be reusing these models
-    this.suggestions = new Suggestions([new Suggestion(), new Suggestion(), new Suggestion(), new Suggestion()]);
+    this.suggestions = new Suggestions([new Suggestion(), new Suggestion(),
+                                        new Suggestion(), new Suggestion()]);
     this.suggestions.on("selected", this.onSuggestionsSelected, this);
 
     // initialize the focus
@@ -156,7 +197,7 @@ var Engine = Backbone.Model.extend({
   focus : function focus(options) {
     options = options || {};
     this.set("focus", true, options);
-    if (typeof options.last == "undefined") {
+    if (typeof options.last === "undefined") {
       return this.suggestions.first();
     }
     return this.suggestions.getLast();
@@ -182,9 +223,8 @@ var Engine = Backbone.Model.extend({
   onFocus : function onFocus(model, value, options) {
     // if we have gained focus
     if (value) {
-      //console.log(model.get("name"), "gained focus", this.get("name"));
       // set our new focus to the last item
-      if (typeof options.last != "undefined") {
+      if (typeof options.last !== "undefined") {
         this.suggestions.focusLast();
       // set our focus to the first item
       } else {
@@ -192,7 +232,6 @@ var Engine = Backbone.Model.extend({
       }
     // if we've lost focus clear out any things that think they still have it
     } else {
-      //console.log(model.get("name"), "lost focus")
       this.suggestions.blur();
     }
 
@@ -201,48 +240,50 @@ var Engine = Backbone.Model.extend({
     var terms = model.get("suggestion"),
         id = this.get("id");
     setStat(id, "index",  this.suggestions.indexOf(model));
-    self.port.emit("click", { "id" : id,
+    addon.port.emit("click", { "id" : id,
                               "terms" : terms,
                               "stats" : stats,
-                              "tab" : (evt != null && (evt.which == 2 || (evt.metaKey || evt.ctrlKey))) } );
+                              "tab" : (evt !== null &&
+                                       (evt.which === 2 ||
+                                        (evt.metaKey || evt.ctrlKey))) });
+  },
+  equals : function equals(model) {
+    return this.cid === model.cid;
   }
 });
 
 var Engines = Backbone.Collection.extend({
   model : Engine,
   initialize : function Engines(models, options) {
-    self.port.on("engines.reset", this.onEngines.bind(this), this);
-    self.port.on("terms.reset", this.onTerms.bind(this), this);
-    self.port.on("suggestions", this.onSuggestions.bind(this), this);
+    addon.port.on("engines.reset", this.onEngines.bind(this), this);
+    addon.port.on("terms.reset", this.onTerms.bind(this), this);
+    addon.port.on("suggestions", this.onSuggestions.bind(this), this);
     this.on("change:focus", this.onFocus, this);
   },
   onFocus : function onFocus(model, value, options) {
     // ensure only 1 engine has focus
     if (value) {
-      this.where({focus:true}).forEach(function(m) {
-        if (model != m) {
-          //console.log("blur -", m.get("name"));
+      this.where({focus: true}).forEach(function (m) {
+        if (!model.equals(m)) {
           m.blur();
         }
       });
     }
   },
   // returns null if no other (next) engines or suggestions can be focused
-  focusNext : function() {
+  focusNext : function focusNext() {
     var engine = this.getFocus(),
-        suggestion = engine.getFocus(),
         next = engine.focusNext(),
-        index = -1,
+        index = this.length,
         other = null;
 
     // no suggestions to focus move on to other engine
-    if (next == null) {
+    if (next === null) {
       index = this.indexOf(engine) + 1;
-      if (index <= this.length) {
+      if (index < this.length) {
         other = this.at(index);
       }
-      //console.log("next.engine", this.indexOf(engine) + 1, (other)? other.get("name") : other);
-      if (other != null) {
+      if (other !== null) {
         return other.focus();
       } else { // hold our focus on the last engine
         return engine.focus({ last : true });
@@ -250,19 +291,18 @@ var Engines = Backbone.Collection.extend({
     }
     return next;
   },
-  focusPrevious : function() {
+  focusPrevious : function focusPrevious() {
     var engine = this.getFocus(),
-        suggestion = engine.getFocus(),
         previous = engine.focusPrevious(),
         index = -1,
         other = null;
 
-    if (previous == null) {
+    if (previous === null) {
       index = this.indexOf(engine) - 1;
-      if (index <= this.length) {
+      if (index >= 0) {
         other = this.at(index);
       }
-      if (other != null) { // if there's an engine previous to us focus it
+      if (other !== null) { // if there's an engine previous to us focus it
         return other.focus({ last : true });
       } else { // otherwise hold the focus on this first engine
         return engine.focus();
@@ -271,11 +311,11 @@ var Engines = Backbone.Collection.extend({
     return previous;
   },
   getFocus : function getFocus() {
-    return this.where({focus:true}).pop();
+    return this.where({focus: true}).pop();
   },
   onEngines : function onEngines(engines) {
     stats = {};
-    this.reset(engines.map(function(engine, i) {
+    this.reset(engines.map(function (engine, i) {
       setStat(engine.id, "id", engine.id);
       setStat(engine.id, "order", i);
       return new Engine(engine);
@@ -283,8 +323,9 @@ var Engines = Backbone.Collection.extend({
     this.first().focus();
   },
   onTerms : function onTerms(terms) {
-    this.models.forEach(function(engine) { engine.setTerms(terms); });
-    try { this.first().focus(); } catch (ignore) { /* sometimes the list hasn't fully initialized yet */ }
+    this.models.forEach(function (engine) { engine.setTerms(terms); });
+    try { this.first().focus(); }
+    catch (ignore) { /* sometimes the list hasn't fully initialized yet */ }
   },
   onSuggestions : function onSuggestions(engine, terms, results) {
     // update the (possibly) new search terms for all engines
@@ -292,8 +333,8 @@ var Engines = Backbone.Collection.extend({
     if (_engine) {
       _engine.setTerms(terms);
       // reset the suggestions for the engine with results
-      _engine.suggestions.rest().forEach(function(suggestion, i) {
-        if (typeof results[i] != "undefined") {
+      _engine.suggestions.rest().forEach(function (suggestion, i) {
+        if (typeof results[i] !== "undefined") {
           suggestion.set({ "suggestion" : results[i], "terms" : terms });
         } else {
           suggestion.clear();
@@ -301,7 +342,7 @@ var Engines = Backbone.Collection.extend({
       });
       // reset the focus
       this.first().focus();
-      setStat(engine.id, "suggestions", Math.min(results.length, MAX_RESULTS));
+      setStat(engine.id, "suggestions", results.length);
     }
 
   },
@@ -323,11 +364,11 @@ var SuggestionView = Backbone.View.extend({
   },
   onFocus : function onFocus(model, value, options) {
     if (value) {
-      $("."+this.className).removeClass("focused");
+      $("." + this.className).removeClass("focused");
       this.$el.toggleClass("focused");
     }
   },
-  render : function() {
+  render : function render() {
     var suggestion = this.model.get("suggestion"),
         terms = this.model.get("terms");
     if (!suggestion) {
@@ -337,7 +378,8 @@ var SuggestionView = Backbone.View.extend({
     }
 
     if (this.model.hasChanged("suggestion")) {
-      self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+      addon.port.emit("resize", { "width" : $("#results").width(),
+                                  "height" : $("#results").height() });
     }
     return this;
   },
@@ -345,7 +387,7 @@ var SuggestionView = Backbone.View.extend({
   // returns <strong>wrappers</strong> around the terms found in the text
   _highlight : function (text, terms) {
     var index = text.toLowerCase().indexOf(terms.toLowerCase()),
-        pre, mid, post;
+        pre = "", mid = "", post = "";
     // the terms could not exist in the text at all
     if (index < 0) {
       return text;
@@ -363,26 +405,31 @@ var EngineView = Backbone.View.extend({
   template: _.template($('#engine-template').html()),
   initialize : function EngineView() {
     this.model.on("change:focus", this.onFocus.bind(this), this);
-    // initialize our suggestion views
-    this.suggestions = this.model.suggestions.map(function(suggestion) { return new SuggestionView({model:suggestion}); });
+    var mapSuggestions = function (suggestion) {
+      return new SuggestionView({model: suggestion});
+    };
+    this.suggestions = this.model.suggestions.map(mapSuggestions);
   },
-  onFocus : function onFocus(model, value, options) {
-    if (value) {
-      $("."+this.className).removeClass("focused");
+  onFocus : function onFocus(model, hasFocus, options) {
+    if (hasFocus) {
+      // remove focus from all engines which might claim it
+      $("." + this.className).removeClass("focused");
+      // add focus to our engine
       this.$el.addClass("focused");
     }
   },
   // only run once
-  render : function() {
+  render : function render() {
     this.$el.html(this.template(this.model.toJSON()));
-    this.suggestions.forEach(function(suggestion, i) {
+    this.suggestions.forEach(function (suggestion, i) {
       var $el = suggestion.render().$el;
-      if (i == 0) {
+      if (i === 0) {
         $el.addClass("default");
       }
       this.$el.append($el.disableSelection());
     }.bind(this));
-    self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+    addon.port.emit("resize", { "width" : $("#results").width(),
+                                "height" : $("#results").height() });
     return this;
   }
 });
@@ -391,30 +438,29 @@ var EngineListView = Backbone.View.extend({
   el : "#engines",
   initialize: function EngineListView() {
     this.collection.bind('reset', this.render, this);
-    $("body").bind('keydown', this.onKeyPress.bind(this));
-    self.port.on("next", this.goNext.bind(this), this);
-    self.port.on("previous", this.goPrevious.bind(this), this);
-    self.port.on("go", this.goSearch.bind(this), this);
+    addon.port.on("next", this.goNext.bind(this), this);
+    addon.port.on("previous", this.goPrevious.bind(this), this);
+    addon.port.on("go", this.goSearch.bind(this), this);
   },
   onKeyPress : function onKeyPress(evt) {
-    if (evt.keyCode == 40) { // down
+    if (evt.keyCode === 40) { // down
       this.goNext();
-    } else if (evt.keyCode == 38) { // up
+    } else if (evt.keyCode === 38) { // up
       this.goPrevious();
-    } else if (evt.keyCode == 13) {
+    } else if (evt.keyCode === 13) {
       this.goSearch();
     }
   },
   goNext : function goNext() {
     var focused = this.collection.focusNext();
-    if (focused != null && focused.has("suggestion")) {
-      self.port.emit("terms", focused.get("suggestion"));
+    if (focused !== null && focused.has("suggestion")) {
+      addon.port.emit("terms", focused.get("suggestion"));
     }
   },
   goPrevious : function goPrevious() {
     var focused = this.collection.focusPrevious();
-    if (focused != null && focused.has("suggestion")) {
-      self.port.emit("terms", focused.get("suggestion"));
+    if (focused !== null && focused.has("suggestion")) {
+      addon.port.emit("terms", focused.get("suggestion"));
     }
   },
   goSearch : function goSearch() {
@@ -424,11 +470,15 @@ var EngineListView = Backbone.View.extend({
   },
   render: function render() {
     this.$el.children().remove();
-    this.collection.each(function(model) {
-      var engine = new EngineView({model: model, id : model.id.replace(/[\s\W]+/g, "_") });
+    this.collection.each(function (model) {
+      // The id attr is passed in so we get HTML id's like
+      // this: http_en_wikipedia_org_w_opensearch_desc_php
+      var engine = new EngineView({model: model,
+                                  id : model.id.replace(/[\s\W]+/g, "_") });
       this.$el.append(engine.render().$el.disableSelection());
     }, this);
-    self.port.emit("resize", { "width" : $("#results").width(), "height" : $("#results").height() });
+    addon.port.emit("resize", { "width" : $("#results").width(),
+                               "height" : $("#results").height() });
     return this;
   }
 });
@@ -437,27 +487,30 @@ var engines = new Engines();
 
 $(document).ready(function () {
 
-  var elv = new EngineListView({collection:engines});
+  var elv = new EngineListView({collection: engines});
 
-  $("#preferences").click(function() {
-    self.port.emit("preferences");
+  $("#preferences").click(function () {
+    addon.port.emit("preferences");
   });
 
-  $(".engine").live("mouseover", function() {
+  $(".engine").live("mouseover", function () {
     $(".engine").removeClass("focused");
     $(this).addClass("focused");
   });
 
-  $(".suggestion").live("mouseover", function() {
+  $(".suggestion").live("mouseover", function () {
     // remove all other possibly selected results
     $(".suggestion").removeClass("focused");
     $(this).addClass("focused").parent().trigger("mouseenter");
   });
 
   // We only want to continue if we're debugging
-  if (window.location.protocol != "file:") {
+  if (window.location.protocol !== "file:") {
     return;
   }
+
+  // for testing the keyboard shortcuts
+  $("body").bind('keydown', elv.onKeyPress.bind(elv));
 
   //window.setTimeout(function() { elv.goSearch(); }, 7 * 1000);
 
