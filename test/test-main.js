@@ -79,7 +79,6 @@ exports["clear search on tab close"] = function (test) {
       searchtab = tab;
       // set a new search
       searchbar.getSearchTextBox().value = "harry";
-      searchbar.getSearchTextBox().focus();
       // send a key event to trigger the fact that we are searching "y"
       event1.initKeyEvent("keyup",        //  in DOMString typeArg,
                          true,             //  in boolean canBubbleArg,
@@ -92,6 +91,7 @@ exports["clear search on tab close"] = function (test) {
                          89,               //  in unsigned long keyCodeArg,
                          0);              //  in unsigned long charCodeArg
       searchbar.getSearchTextBox().dispatchEvent(event1);
+      searchbar.getSearchTextBox().focus();
 
       // give the panel a moment to open and initialize
       timer.setTimeout(function () {
