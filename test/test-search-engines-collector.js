@@ -103,7 +103,8 @@ exports.testCollectorWikipedia = function(test) {
     test.assertEqual(collected.name, "Wikipedia (en)", "Wikipedia name is correct");
     test.assertEqual(collected.queryURL,"http://en.wikipedia.org/w/index.php?title=Special:Search&search={searchTerms}", "Wikipedia Query URL is correct");
     test.assertEqual(collected.suggestionURL,"http://en.wikipedia.org/w/api.php?action=opensearch&search={searchTerms}&namespace=0", "Wikipedia Suggestion URL is correct");
-    test.assertEqual(collected.icon,"http://en.wikipedia.org/favicon.ico", "Wikipedia Icon is correct");
+    test.assertEqual(collected.icon, "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABS0lEQVQ4jcWTwY3EIAxFR6MUETpwDaPcQwekBVICOUIRLiGUQBqYlAAdhB6I/h5GQZPdaLXSrrQHDljW8/e3fSt7wW/e7f8BYQlQg4LsJcISUPYCP3vIXsJMBjFFlL3ATAZqUIgpIqYIPWqoQb0UOOtARBVQ9gLZSxARYorIW4azDsyMshfkLUOPGsz8AsQUIVoBPWrkLaPsBcwM0Qr42WN9rtCjrvADcPJADQqiFVifKw7oocJZBz/7CghLqP/be1C0As66msjMaO4N1KBO1Z11td3TFGQvIXtZjYspont0kL2sOTFFmMlcj9FZh+beVHkH4N1gZq5mXu4BEUENCnnL8LOHHjW6R1dNc9ZVoy8Bzjp0jw5mMvCzr5KJCMx88ugS4GcPIgIR1VbCEmrsmNK3q/zZzLIX6FGDiH52C2EJXyrFFE+b+mfH9AGWL1wAegygIwAAAABJRU5ErkJggg==",
+                     "Wikipedia Icon is correct");
 
     test.done();
   });
@@ -121,7 +122,8 @@ exports.testCollectorFoursquare = function(test) {
     test.assertEqual(collected.name, "foursquare", "FourSquare name is correct");
     test.assertEqual(collected.queryURL,"https://foursquare.com/search?q={searchTerms}&extra=lots", "FourSquare Query URL is correct");
     test.assertEqual(collected.suggestionURL,"", "FourSquare Suggestion URL is empty");
-    test.assertEqual(collected.icon,"https://foursquare.com/favicon.ico", "FourSquare icon is correct");
+    test.assertEqual(collected.icon, "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACs0lEQVQ4jY2PXUjTYRTG/9dBdxm4Mdqs0KAsyKxuJG+8sii6KCGMChYZdOE0pA/Lj0qdotVsISiVouXSSrdppNaa21wfZupWbpn7l+FHQqLM2eb8dbHNj+iiAz/OeZ/nOQdeQTexyKPx/+fhWJDLLzyMTc8DINwfXaDm+zLVf7FSqxkNkmsZ57VrikgJWo8fzYgfjcfP7RE/ZS4/Gk8ATUQfWfZvDM6gNYksLrJ8oMzto8Tt49xLEaWugOzWNE7qbpHz5ifXP81yzTlLsdvHjSEvmS0u/AtBVpaQ55wl45VIwfM0Xn1NxTi0l4aPa8nQHSchv43EwnYybRMo9cOIU3NLi7+8fq4YhhCy+35xtPEpnV/SGZgoxvpNSbNjE5XW9cTn69l2rZuEwg7aHZNLyyM/vZx5PMhZyxjC6Z5JDtfr6Bo+Rv94IRbxFE2DG6m0rmNrXgtbCrq5+uwzgWDo473iNGkN/aSbfqC0TSIcMookP3hHcUcqHcMptH7eSe2HNXR8UZJSbiX1tp0ZXwCA5wPj7NP2cMDoYb/ew0GDiJDS5GZfo4tdmi5O1J0i+0kSWnM+84E5PFNexKk5fgeCVHYOsyHzGdtLOknWuUludJHS5EZIqneyp9bBnjoHCTX9yC+0sUFlIO+pkxlfgOm5AOcbB5Cp9GzONbL7wUAoX+sgqd6JkHjvI9ur+5ap6kVxyYhUpSftrp0j2h6kKgOKiwbiq3qXcjuq+0i8148QX/WeuDtvVxFbaUeW04pEZUSS1YYsp4VYjT3ka8PceUt81XuEOI0deYUNeYUNRbjLb9qQV1iJzmomOqsJeYU15N9cnYnV2BFiyi1I1d1hzGFCs6S0G2mpeRWSyKw2E1NuQZCpzUQVmYgqMrE+3FfyLy2iy9RmBEWZGWmJ6b+QhIm8FWVm/gC+c+W5gWzPJgAAAABJRU5ErkJggg==",
+                     "FourSquare icon is correct");
 
     test.done();
   });
