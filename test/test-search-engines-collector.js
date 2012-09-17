@@ -110,7 +110,7 @@ exports.testCollectorWikipedia = function(test) {
   });
 
   var dataurl = url.DataURL("data:application/opensearchdescription+xml;charset=utf-8," + escape(readBinaryURI(WIKIPEDIA_URI)));
-  SearchEnginesCollector.getEngineByXMLURL(dataurl);
+  SearchEnginesCollector.getEngineByXMLURL(dataurl.toString());
   test.waitUntilDone(5 * 1000);
 }
 
@@ -129,6 +129,6 @@ exports.testCollectorFoursquare = function(test) {
   });
 
   var dataurl = url.DataURL("data:application/opensearchdescription+xml;charset=utf-8," + escape(readBinaryURI(FOURSQUARE_URI)));
-  SearchEnginesCollector.getEngineByXMLURL(dataurl);
+  SearchEnginesCollector.getEngineByXMLURL(dataurl.toString());
   test.waitUntilDone(5 * 1000);
 }
