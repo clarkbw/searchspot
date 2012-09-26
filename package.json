@@ -4,7 +4,7 @@
     "description" : "Search suggestions from multiple search engines to get you answers faster",
     "license": "MPL 2.0",
     "author": "Bryan Clark (http://clarkbw.net/) <clarkbw@gmail.com>",
-    "version": "0.7.0",
+    "version": "0.7.5",
     "contributors" : [
         "James Burke"
     ],
