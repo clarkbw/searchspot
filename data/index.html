@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html>
 <!-- This Source Code Form is subject to the terms of the Mozilla Public
    - License, v. 2.0. If a copy of the MPL was not distributed with this file,
    - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
@@ -7,88 +7,18 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
-  <title>Awesome Search : Preferences</title>
-  <link href="../css/bootstrap.css" rel="stylesheet">
-  <link href="../css/bootstrap-responsive.css" rel="stylesheet">
+  <title>Awesome Search</title>
+  <link href="css/bootstrap.css" rel="stylesheet">
+  <link href="css/bootstrap-responsive.css" rel="stylesheet">
+  <link href="css/preferences.css" rel="stylesheet">
 
   <style type="text/css">
-    #content {
-      position: relative;
-      padding-top: 60px;
+    .navbar {
+      padding-bottom: 60px;
     }
     .navbar .brand {
       float: right;
       font-weight: bold;
-    }
-    .engines {
-      cursor: move;
-    }
-    #defaults, #others {
-      margin: 20px 0;
-    }
-    .engine-view {
-      padding: 5px;
-      border-radius: 2px;
-      border: 1px solid #ccc;
-      margin: 5px auto;
-      background-color: #fff;
-    }
-    .engine-view.ui-sortable-helper {
-      box-shadow: 4px 4px 8px #aaa;
-    }
-    #defaults .btn.add {
-      display: none;
-    }
-    #others .btn.remove {
-      display: none;
-    }
-    .btn {
-      font-weight: bold;
-      cursor: pointer;
-    }
-    img {
-      vertical-align: middle;
-    }
-    .icon {
-      margin: 2px 5px;
-      height: 16px;
-      min-width: 16px;
-    }
-    .name {
-      margin: 5px;
-      color: #333;
-    }
-    .url {
-      margin: 5px 7px;
-      color: #666;
-    }
-    .attributes {
-      cursor: pointer;
-    }
-    .options {
-      margin-top: 65px;
-      position: relative;
-      padding-top: 40px;
-    }
-    .options:after {
-        background-color: #F5F5F5;
-        border: 1px solid #DDDDDD;
-        border-radius: 4px 0 4px 0;
-        color: #616468;
-        content: "Options";
-        font-size: 12px;
-        font-weight: bold;
-        left: -1px;
-        padding: 3px 7px;
-        position: absolute;
-        top: -1px;
-    }
-    .footer {
-      padding: 70px 0px;
-      margin-top: 70px;
-      border-top: 1px solid rgb(229, 229, 229);
-      background-color: rgb(245, 245, 245);
-      text-align: center;
     }
   </style>
 </head>
@@ -102,7 +32,7 @@
     </div>
   </div>
 
-  <div id="content" class="container">
+  <div class="container">
     <div class="row">
       <div class="span6">
         <div class="">
@@ -160,14 +90,14 @@
       </div>
   </script>
 
-<!--
-  <script type="text/javascript" src="../js/jquery.js"></script>
-  <script type="text/javascript" src="../js/jquery-ui-1.8.23.custom.js"></script>
-  <script type="text/javascript" src="../js/underscore.js"></script>
-  <script type="text/javascript" src="../js/backbone.js"></script>
-  <script type="text/javascript" src="../js/bootstrap-tooltip.js"></script>
 
-  <script type="text/javascript" src="preferences.js"></script>
--->
+  <script type="text/javascript" src="js/jquery.js"></script>
+  <script type="text/javascript" src="js/jquery-ui-1.8.23.custom.js"></script>
+  <script type="text/javascript" src="js/underscore.js"></script>
+  <script type="text/javascript" src="js/backbone.js"></script>
+  <script type="text/javascript" src="js/bootstrap-tooltip.js"></script>
+
+  <script type="text/javascript" src="js/preferences.js"></script>
+
 </body>
 </html>
