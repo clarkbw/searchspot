@@ -57,19 +57,14 @@
     body {
         font-size: 14px;
         color: #333;
-        width: 340px;
-        height: 340px;
-        border: 1px solid #999;
+        width: 100%;
     }
     ol, li {
         margin: 0;
         padding: 0;
         list-style: none;
     }
-    #resultbox {
-    }
     .results {
-        width: 100%;
         margin: 0;
         position: relative;
         vertical-align: top;
@@ -89,14 +84,14 @@
         vertical-align: top;
         display: inline-block;
     }
-    .results li .title {
+    .results.history li {
+      white-space: nowrap;
+    }
+    .results.history li .title {
         font-weight: bold;
     }
-    .results li .url {
+    .results.history li .url {
         color: #666;
-    }
-    .results.history {
-        border-right: 1px solid #ddd;
     }
 
     .results.search {
@@ -105,19 +100,27 @@
         /*position: absolute;*/
     }
     .results li .engine.suggestion {
-	-moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
-	-webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
-	box-shadow:inset 0px 1px 0px 0px #ffffff;
-	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #febc2b), color-stop(1, #dfdfdf) );
-	background:-moz-linear-gradient( center top, #febc2b 5%, #dfdfdf 100% );
-	background-color:#fcfcfc;
-	-moz-border-radius:4px;
-	-webkit-border-radius:4px;
-	border-radius:4px;
-	border:1px solid #dcdcdc;
-	color:#222;
-	padding:2px 0px;
-	text-shadow:1px 1px 0px #ffffff;
+      white-space: nowrap;
+      font-size: 12px;
+      -moz-box-shadow:inset 0px 1px 0px 0px #6886c6;
+      -webkit-box-shadow:inset 0px 1px 0px 0px #6886c6;
+      box-shadow:inset 0px 1px 0px 0px #6886c6;
+      background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #6886c6), color-stop(1, #3B5998) );
+      background:-moz-linear-gradient( center top, #6886c6 5%, #3B5998 100% );
+      background-color:#6886c6;
+      -moz-border-radius:4px;
+      -webkit-border-radius:4px;
+      border-radius:4px;
+      border:1px solid #466cb7;
+      color:#fff;
+      padding:2px 2px;
+      margin-right: 2px;
+      text-shadow:1px 1px 0px #3B5998;
+    }
+    .results li .engine.suggestion img {
+      border-right: 1px solid #3B5998;
+      padding-right: 4px;
+      margin-right: 2px;
     }
     .results.search li img {
         vertical-align: middle;
@@ -126,33 +129,23 @@
         display: inline-block;
     }
     .results li .items .item {
-        font-size: 12px;
-        border: 1px solid lightsteelblue;
-        border-radius: 4px;
-        padding: 2px 4px;
-        color: #fff;
-        background: steelblue;
+      font-size: 12px;
+      -moz-box-shadow:inset 0px 1px 0px 0px #6886c6;
+      -webkit-box-shadow:inset 0px 1px 0px 0px #6886c6;
+      box-shadow:inset 0px 1px 0px 0px #6886c6;
+      background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #6886c6), color-stop(1, #3B5998) );
+      background:-moz-linear-gradient( center top, #6886c6 5%, #3B5998 100% );
+      background-color:#6886c6;
+      -moz-border-radius:4px;
+      -webkit-border-radius:4px;
+      border-radius:4px;
+      border:1px solid #466cb7;
+      color:#fff;
+      padding: 2px 4px;
+      text-shadow:1px 1px 0px #3B5998;
     }
   </style>
   <script type="text/javascript">
-    // catch debug running the panel HTML directly from a browser
-    if (typeof self === "undefined") {
-      self = {};
-    }
-    
-    if (typeof self.port === "undefined") {
-      self.port = { on : function (signal, callback) { },
-                    emit : function (signal, objects) { }
-                  };
-    }
-    
-    if (typeof addon === "undefined") {
-      var addon = self;
-    }
-
-    var OFFSET = 24;
-    var drag = [];
-
     var HistoryItem = Backbone.Model.extend({
     });
     var SuggestionItem = Backbone.Model.extend({
@@ -247,21 +240,12 @@
       }
     });
 
-    addon.port.on("suggestions", function onSuggestions(engine, terms, results) {
-      sl.getEngineById(engine.id).setSuggestions(results);
-    });
+    //addon.port.on("suggestions", function onSuggestions(engine, terms, results) {
+    //  sl.getEngineById(engine.id).setSuggestions(results);
+    //});
 
-    window.onInputChanged = function(value) {
-      $("#change").text(value);
-      // send this text value off to the add-on for suggestions
-      addon.port.emit("text", value);
-      if (ff_history) {
-        var length = ff_history.length();
-        for (var i = 0; i < length; i += 1) {
-          $("#change").append($("<div/>").text(ff_history.get(i)));
-          
-        }
-      }
+    window.onSuggestions = function(value) {
+      $("body").append($("<div/>").text(JSON.stringify(value)));
     };
 
     window.onHistoryChanged = function (herstory) {
@@ -312,7 +296,6 @@
 
 </head>
 <body>
-    <div id="change">Change</div>
     <div id="content">
         <div id="resultbox">
         <ol class="results search">
