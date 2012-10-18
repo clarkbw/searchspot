@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
+  <script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+
+  <!-- this is only for the orientchange event -->
+  <script>
+/*! jQuery Mobile v1.2.0 jquerymobile.com | jquery.org/license */
+  (function(a,b,c){typeof define=="function"&&define.amd?define(["jquery"],function(d){return c(d,a,b),d.mobile}):c(a.jQuery,a,b)})(this,document,function(a,b,c,d){(function(a){a.event.special.throttledresize={setup:function(){a(this).bind("resize",c)},teardown:function(){a(this).unbind("resize",c)}};var b=250,c=function(){f=(new Date).getTime(),g=f-d,g>=b?(d=f,a(this).trigger("throttledresize")):(e&&clearTimeout(e),e=setTimeout(c,b-g))},d=0,e,f,g})(a),function(a,c){a.extend(a.support,{orientation:"orientation"in b&&"onorientationchange"in b})}(a),function(a,b){function o(){var a=g();a!==h&&(h=a,d.trigger(e))}var d=a(b),e="orientationchange",f,g,h,i,j,k={0:!0,180:!0};if(a.support.orientation){var l=b.innerWidth||a(b).width(),m=b.innerHeight||a(b).height(),n=50;i=l>m&&l-m>n,j=k[b.orientation];if(i&&j||!i&&!j)k={"-90":!0,90:!0}}a.event.special.orientationchange=a.extend({},a.event.special.orientationchange,{setup:function(){if(a.support.orientation&&!a.event.special.orientationchange.disabled)return!1;h=g(),d.bind("throttledresize",o)},teardown:function(){if(a.support.orientation&&!a.event.special.orientationchange.disabled)return!1;d.unbind("throttledresize",o)},add:function(a){var b=a.handler;a.handler=function(a){return a.orientation=g(),b.apply(this,arguments)}}}),a.event.special.orientationchange.orientation=g=function(){var d=!0,e=c.documentElement;return a.support.orientation?d=k[b.orientation]:d=e&&e.clientWidth/e.clientHeight<1.1,d?"portrait":"landscape"},a.fn[e]=function(a){return a?this.bind(e,a):this.trigger(e)},a.attrFn&&(a.attrFn[e]=!0)}(a,this)})
+  </script>
+
+  <!-- this is for our drag and swipe eventing -->
+  <script src="http://eightmedia.github.com/hammer.js/hammer.js"></script>
+  <script src="http://eightmedia.github.com/hammer.js/jquery.hammer.js"></script>
+
+  <!-- modeling -->
+  <script src="http://documentcloud.github.com/underscore/underscore.js"></script>
+  <script src="http://backbonejs.org/backbone.js"></script>
+
+  <title></title>
+
+  <link href="http://necolas.github.com/normalize.css/2.0.1/normalize.css" rel="stylesheet">
+
+  <script type="text/template" id="suggestion-template">
+    <li class="suggestions">
+        <img src="<%= get('icon') %>"/>
+        <div class="items">
+          <% _.each(items.models, function(item) { %>
+            <span class="item"><%= item.get('value') %></span> 
+          <% }); %>
+        </div>
+    </li>
+  </script>
+
+  <script type="text/template" id="history-template">
+    <li>
+        <div class="col"><img src="<%= get('icon') %>"/></div>
+        <div class="col">
+            <div class="title"><%= get('name') %></div>
+            <div class="url"><%= get('id') %></div>
+        </div>
+    </li>
+  </script>
+
+  <style type="text/css">
+    body {
+        font-size: 14px;
+        color: #333;
+        width: 340px;
+        height: 340px;
+        border: 1px solid #999;
+    }
+    ol, li {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    #resultbox {
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    .results {
+        width: 190px;
+        margin: 0;
+        position: relative;
+        display: inline-block;
+        vertical-align: top;
+        background-color: #fff;
+        /*border: 1px dashed orange;*/
+    }
+    .results li {
+        vertical-align: top;
+        margin-top: 5px;
+        padding: 5px 0 5px 5px;
+        border-bottom: 1px solid #ddd;
+    }
+    .results li img {
+        width: 16px;
+        height: 16px;
+        margin: 4px;
+    }
+    .results li .col {
+        vertical-align: top;
+        display: inline-block;
+    }
+    .results li .title {
+        font-weight: bold;
+    }
+    .results li .url {
+        color: #666;
+    }
+    .results.history {
+        border-right: 1px solid #ddd;
+    }
+
+    .results.search {
+        border-left: 1px solid #ddd;
+        box-shadow: -2px 0 4px #ddd;
+        /*position: absolute;*/
+    }
+    .results.search li img {
+        vertical-align: middle;
+    }
+    .results li .items {
+        display: inline-block;
+    }
+    .results li .items .item {
+        font-size: 12px;
+        border: 1px solid lightsteelblue;
+        border-radius: 4px;
+        padding: 2px 4px;
+        color: #fff;
+        background: steelblue;
+    }
+  </style>
+  <script type="text/javascript">
+    // catch debug running the panel HTML directly from a browser
+    if (typeof self === "undefined") {
+      self = {};
+    }
+    
+    if (typeof self.port === "undefined") {
+      self.port = { on : function (signal, callback) { },
+                    emit : function (signal, objects) { }
+                  };
+    }
+    
+    if (typeof addon === "undefined") {
+      var addon = self;
+    }
+
+    var OFFSET = 24;
+    var drag = [];
+
+    var HistoryItem = Backbone.Model.extend({});
+    var SuggestionItem = Backbone.Model.extend({});
+
+    var HistoryList = Backbone.Collection.extend({
+      model: HistoryItem
+    });
+
+    // history list data
+    var hl = new HistoryList();
+
+    var HistoryListView = Backbone.View.extend({
+      template : _.template($("#history-template").html()),
+      className : "results history",
+      initialize: function () {
+        this.collection.on("reset", this.render, this);
+      },
+      render : function render() {
+        $(this.el).empty();
+        _.each(this.collection.models, function(model) {
+          $(this.el).append(this.template(model));
+        }, this);
+        return this;
+      }
+    });
+
+    var SuggestionItems = Backbone.Collection.extend({
+      model: SuggestionItem
+    });
+
+    var SuggestionEngine = Backbone.Model.extend({
+      initialize: function () {
+        this.items = new SuggestionItems();
+        this.items.on("reset", function () { this.trigger("reset"); }.bind(this), this);
+      },
+      // call this to reset the suggestions for this engine
+      setSuggestions : function setSuggestions(suggestions) {
+        this.items.reset(suggestions.map(function(item) {
+          return new SuggestionItem({ value : item });
+        }));
+      }
+    });
+
+    var SuggestionList = Backbone.Collection.extend({
+      model: SuggestionEngine,
+      initialize: function () {
+      },
+      getEngineById : function getEngineById(id) {
+        return this.collection.find(function (engine) {
+          return engine.id === id;
+        });
+      }
+    });
+
+    // suggestion engines with suggestions list data
+    // usage: sl.getEngineById('http://www.google.com/').setSuggestions(['bryan', 'clark']);
+    var sl = new SuggestionList();
+
+    var SuggestionListView = Backbone.View.extend({
+      template : _.template($("#suggestion-template").html()),
+      className : "results search",
+      initialize: function () {
+        this.collection.on("reset", this.render, this);
+      },
+      render : function render() {
+        $(this.el).empty();
+        _.each(this.collection.models, function(model) {
+          $(this.el).append(this.template(model));
+        }, this);
+        return this;
+      }
+    });
+
+    addon.port.on("suggestions", function onSuggestions(engine, terms, results) {
+      sl.getEngineById(engine.id).setSuggestions(results);
+    });
+
+    window.onInputChanged = function(value) {
+      $("#change").text(value);
+      // send this text value off to the add-on for suggestions
+      addon.port.emit("text", value);
+      if (ff_history) {
+        var length = ff_history.length();
+        for (var i = 0; i < length; i += 1) {
+          $("#change").append($("<div/>").text(ff_history.get(i)));
+          
+        }
+      }
+    };
+
+    function size() {
+      $("body").width($(window).width());
+      $(".results").width(($(window).width() / 3) * 2);
+    }
+
+    $(document).bind("mobileinit", function () {
+      // try to turn this off completely so we only use the orientationchange event
+      $.mobile.autoInitializePage = false;
+      $.mobile.touchOverflowEnabled = true;
+      $.mobile.ajaxEnabled = false;
+      $.mobile.loader.prototype.options.text = "";
+      $.event.special.swipe.horizontalDistanceThreshold = "100px";
+    });
+
+
+    // main loop style draw function to keep things looking smooth
+    (function draw() {
+      if (drag.length) {
+        $(".results.search").css({"left" : drag.pop() +'px'});
+      }
+      setTimeout(draw, 40); // 40ms wants to give about 25fps
+    })();
+
+    $(window).bind("orientationchange", size);
+
+    (function ($) {
+        $.fn.disableSelection = function () {
+            return this.attr('unselectable', 'on')
+                       .css('user-select', 'none')
+                       .on('selectstart', false);
+          };
+      }($)
+    );
+
+    $(document).ready(function () {
+      $(".results").disableSelection();
+      size();
+      $(".results.search")
+        .hammer({
+          drag_min_distance: 0,
+          drag_horizontal: true,
+          drag_vertical: false,
+          transform: false,
+          hold: false,
+          prevent_default: true
+        })
+        .bind("drag", function (ev) {
+          drag = [];
+          $(this).css({"position" : "absolute"});
+          var width = $(this).width(), height = $(this).height();
+  
+          var touches = ev.originalEvent.touches || [ev.originalEvent];
+          for(var t=0; t<touches.length; t++) {
+              var el = touches[t].target;
+  
+              if(el) {
+                var left = ev.touches[t].x - (width / 2);  
+                left = (left < OFFSET) ? OFFSET : left;
+                drag.push(left);
+              }
+          }
+        })
+        .bind("dragend", function (ev) {
+          drag = [];
+          // more than half way and we just animate the rest of the way
+          console.log("dragend", $(this).offset().left, $(this).parent().width() / 2);
+          if ($(this).offset().left < $(this).parent().width() / 3) {
+            $(this).css({"position" : "absolute"}).animate({"left" : OFFSET + "px"});
+          } else {
+            $(this).animate({"left" : $(".results.history").width()}, function() { $(this).css({"position" : "relative", "left" : "auto"}); });
+          }
+  
+        })
+        .bind("swipe", function (ev) {
+          if (ev.angle > -90 && ev.angle < 90) {
+            $(this).animate({"left" : $(".results.history").width()}, function() { $(this).css({"position" : "relative", "left" : "auto"}); });
+          } else if (ev.angle < -90 && ev.angle > 90) {
+            $(this).css({"position" : "absolute"}).animate({"left" : OFFSET + "px"});
+          }
+        });
+
+        // sets up the suggestions list view
+        var slv = new SuggestionListView({collection:sl, el:$(".results.search")});
+        // sets up the history list view
+        var hlv = new HistoryListView({collection:hl, el:$(".results.history")});
+
+        // XXX This is all for testing!
+        sl.reset([
+          new SuggestionEngine({ id : "http://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" }),
+          new SuggestionEngine({ id : "http://www.yelp.com/", icon : "http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico" }),
+          new SuggestionEngine({ id : "http://www.amazon.com/", icon : "http://g.etfv.co/http://www.amazon.com/" }),
+          new SuggestionEngine({ id : "http://www.npr.org/", icon : "http://g.etfv.co/http://www.npr.org/" }),
+          new SuggestionEngine({ id : "http://en.wikipedia.com/", icon : "http://g.etfv.co/http://en.wikipedia.com/" })
+        ]);
+        sl.each(function(engine) {
+          console.log("engine", engine.id);
+          // for every engine set the same suggestions
+          engine.setSuggestions(["news", "and", "stuff"]);
+        });
+        hl.reset([
+          new HistoryItem({ id : "https://www.dropbox.com/", icon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "name" : "Dropbox" }),
+          new HistoryItem({ id : "http://www.yelp.com/", icon : "http://g.etfv.co/http://www.cbc.ca/", "name" : "Yelp" }),
+          new HistoryItem({ id : "http://www.amazon.com/", icon : "http://g.etfv.co/http://www.cnn.com/", "name" : "Amazon" }),
+          new HistoryItem({ id : "http://www.npr.org/", icon : "http://g.etfv.co/http://www.npr.org/", "name" : "NPR" }),
+        ]);
+    });
+  </script>
+
+</head>
+<body>
+    <div id="change">Change</div>
+    <div id="content">
+        <div id="resultbox">
+        <ol class="results history">
+            <li>
+                <div class="col"><img src="https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico"/></div>
+                <div class="col">
+                    <div class="title">Dropbox</div>
+                    <div class="url">dropbox.com</div>
+                </div>
+            </li>
+            <li>
+                <div class="col"><img src="http://g.etfv.co/http://www.cbc.ca/"/></div>
+                <div class="col">
+                    <div class="title">CBC</div>
+                    <div class="url">cbc.ca</div>
+                </div>
+            </li>
+            <li>
+                <div class="col"><img src="http://g.etfv.co/http://www.cnn.com/"/></div>
+                <div class="col">
+                    <div class="title">CNN</div>
+                    <div class="url">cnn.com</div>
+                </div>
+            </li>
+            <li>
+                <div class="col"><img src="http://g.etfv.co/http://www.npr.org/"/></div>
+                <div class="col">
+                    <div class="title">NPR</div>
+                    <div class="url">npr.org</div>
+                </div>
+            </li>
+        </ol><ol class="results search">
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://www.google.com/"/>
+                <div class="items"><span class="item">npr</span> <span class="item">news</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico"/>
+                <div class="items"><span class="item">local</span> <span class="item">results</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://www.amazon.com/"/>
+                <div class="items"><span class="item">shopping</span> <span class="item">reviews</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://www.npr.org/"/>
+                <div class="items"><span class="item">headlines</span> <span class="item">politics</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://en.wikipedia.com/"/>
+                <div class="items"><span class="item">News</span> <span class="item">Story</span></div>
+            </li>
+        </ol>
+        </div>
+    </div>
+</body>
+</html>

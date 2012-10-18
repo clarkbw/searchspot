@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this file,
+   - You can obtain one at http://mozilla.org/MPL/2.0/.  -->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    
+  <script type="text/javascript" src="http://code.jquery.com/jquery.js"></script>
+
+  <!-- modeling -->
+  <script src="http://documentcloud.github.com/underscore/underscore.js"></script>
+  <script src="http://backbonejs.org/backbone.js"></script>
+
+  <title></title>
+
+  <link href="http://necolas.github.com/normalize.css/2.0.1/normalize.css" rel="stylesheet">
+
+  <script type="text/template" id="suggestion-engine-template">
+    <span class="engine suggestion">
+        <img src="<%= get('favicon') %>"/>
+        <% _.each(items.models, function(item) { %>
+          <span class="item"><%= item.get('value') %></span> 
+        <% }); %>
+    </span>
+  </script>
+
+  <script type="text/template" id="suggestion-others-template">
+    <li class="suggestions.others">
+    </li>
+  </script>
+
+  <script type="text/template" id="suggestion-default-template">
+    <li class="suggestions">
+        <img src="<%= get('favicon') %>"/>
+        <div class="items">
+          <% _.each(items.models, function(item) { %>
+            <span class="item"><%= item.get('value') %></span> 
+          <% }); %>
+        </div>
+    </li>
+  </script>
+
+  <script type="text/template" id="history-template">
+    <li>
+        <div class="col"><img src="<%= get('favicon') %>"/></div>
+        <div class="col">
+            <div class="title"><%= get('title') %></div>
+            <div class="url"><%= get('url') %></div>
+        </div>
+    </li>
+  </script>
+
+  <style type="text/css">
+    body {
+        font-size: 14px;
+        color: #333;
+        width: 340px;
+        height: 340px;
+        border: 1px solid #999;
+    }
+    ol, li {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+    #resultbox {
+    }
+    .results {
+        width: 100%;
+        margin: 0;
+        position: relative;
+        vertical-align: top;
+    }
+    .results li {
+        vertical-align: top;
+        margin-top: 5px;
+        padding: 5px 0 5px 5px;
+        border-bottom: 1px solid #ddd;
+    }
+    .results li img {
+        width: 16px;
+        height: 16px;
+        margin: 4px;
+    }
+    .results li .col {
+        vertical-align: top;
+        display: inline-block;
+    }
+    .results li .title {
+        font-weight: bold;
+    }
+    .results li .url {
+        color: #666;
+    }
+    .results.history {
+        border-right: 1px solid #ddd;
+    }
+
+    .results.search {
+        border-left: 1px solid #ddd;
+        box-shadow: -2px 0 4px #ddd;
+        /*position: absolute;*/
+    }
+    .results li .engine.suggestion {
+	-moz-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	-webkit-box-shadow:inset 0px 1px 0px 0px #ffffff;
+	box-shadow:inset 0px 1px 0px 0px #ffffff;
+	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #febc2b), color-stop(1, #dfdfdf) );
+	background:-moz-linear-gradient( center top, #febc2b 5%, #dfdfdf 100% );
+	background-color:#fcfcfc;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border-radius:4px;
+	border:1px solid #dcdcdc;
+	color:#222;
+	padding:2px 0px;
+	text-shadow:1px 1px 0px #ffffff;
+    }
+    .results.search li img {
+        vertical-align: middle;
+    }
+    .results li .items {
+        display: inline-block;
+    }
+    .results li .items .item {
+        font-size: 12px;
+        border: 1px solid lightsteelblue;
+        border-radius: 4px;
+        padding: 2px 4px;
+        color: #fff;
+        background: steelblue;
+    }
+  </style>
+  <script type="text/javascript">
+    // catch debug running the panel HTML directly from a browser
+    if (typeof self === "undefined") {
+      self = {};
+    }
+    
+    if (typeof self.port === "undefined") {
+      self.port = { on : function (signal, callback) { },
+                    emit : function (signal, objects) { }
+                  };
+    }
+    
+    if (typeof addon === "undefined") {
+      var addon = self;
+    }
+
+    var OFFSET = 24;
+    var drag = [];
+
+    var HistoryItem = Backbone.Model.extend({
+    });
+    var SuggestionItem = Backbone.Model.extend({
+    });
+
+    var HistoryList = Backbone.Collection.extend({
+      model: HistoryItem
+    });
+
+    // history list data
+    var hl = new HistoryList();
+
+    var HistoryListView = Backbone.View.extend({
+      template : _.template($("#history-template").html()),
+      className : "results history",
+      initialize: function () {
+        this.collection.on("reset", this.render, this);
+      },
+      render : function render() {
+        $(this.el).empty();
+        _.each(this.collection.models, function(model) {
+          $(this.el).append(this.template(model));
+        }, this);
+        return this;
+      }
+    });
+
+    var SuggestionItems = Backbone.Collection.extend({
+      model: SuggestionItem
+    });
+
+    var SuggestionEngine = Backbone.Model.extend({
+      idAttribute : "url",
+      isDefault : function () {
+        return (this.id.indexOf("google.com") >= 0);
+      },
+      initialize: function () {
+        this.items = new SuggestionItems();
+        this.items.on("reset", function () { this.trigger("reset"); }.bind(this), this);
+      },
+      // call this to reset the suggestions for this engine
+      setSuggestions : function setSuggestions(suggestions) {
+        // reduce suggestions to 1 if this isn't the default engine
+        if (!this.isDefault()) {
+          suggestions = [_.first(suggestions)];
+        }
+        this.items.reset(suggestions.map(function(item) {
+          return new SuggestionItem({ value : item });
+        }));
+      }
+    });
+
+    var SuggestionList = Backbone.Collection.extend({
+      model: SuggestionEngine,
+      initialize: function () {
+      },
+      getDefaultEngine : function getDefaultEngine() {
+        return _.find(this.models, function (engine) {
+          return engine.isDefault();
+        });
+      },
+      getEngineById : function getEngineById(id) {
+        return _.find(this.models, function (engine) {
+          return engine.id === id;
+        });
+      }
+    });
+
+    // suggestion engines with suggestions list data
+    // usage: sl.getEngineById('http://www.google.com/').setSuggestions(['bryan', 'clark']);
+    var sl = new SuggestionList();
+
+    var SuggestionListView = Backbone.View.extend({
+      dtemplate : _.template($("#suggestion-default-template").html()),
+      otemplate : _.template($("#suggestion-others-template").html()),
+      template : _.template($("#suggestion-engine-template").html()),
+      className : "results search",
+      initialize: function () {
+        this.collection.on("reset", this.render, this);
+      },
+      render : function render() {
+        $(this.el).empty();
+        $(this.el).append(this.dtemplate(this.collection.getDefaultEngine()));
+        var others = $(this.otemplate());
+        $(this.el).append(others);
+        _.each(this.collection.models, function(model) {
+          if (!model.isDefault()) {
+            $(others).append(this.template(model));
+          }
+        }, this);
+        return this;
+      }
+    });
+
+    addon.port.on("suggestions", function onSuggestions(engine, terms, results) {
+      sl.getEngineById(engine.id).setSuggestions(results);
+    });
+
+    window.onInputChanged = function(value) {
+      $("#change").text(value);
+      // send this text value off to the add-on for suggestions
+      addon.port.emit("text", value);
+      if (ff_history) {
+        var length = ff_history.length();
+        for (var i = 0; i < length; i += 1) {
+          $("#change").append($("<div/>").text(ff_history.get(i)));
+          
+        }
+      }
+    };
+
+    window.onHistoryChanged = function (herstory) {
+      _.each(herstory, function (stories) {
+        _.each(stories, function (story, term) {
+          hl.reset(story.map(function (item) { return new HistoryItem(item); }));
+        });
+      });
+    };
+
+    (function ($) {
+        $.fn.disableSelection = function () {
+            return this.attr('unselectable', 'on')
+                       .css('user-select', 'none')
+                       .on('selectstart', false);
+          };
+      }($)
+    );
+
+    $(document).ready(function () {
+      $(".results").disableSelection();
+      // sets up the suggestions list view
+      var slv = new SuggestionListView({collection:sl, el:$(".results.search")});
+      // sets up the history list view
+      var hlv = new HistoryListView({collection:hl, el:$(".results.history")});
+
+      // XXX This is all for testing!
+      sl.reset([
+        new SuggestionEngine({ url : "http://www.google.com/", favicon : "http://g.etfv.co/http://www.google.com/" }),
+        new SuggestionEngine({ url : "http://www.yelp.com/", favicon : "http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico" }),
+        new SuggestionEngine({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.amazon.com/" }),
+        new SuggestionEngine({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/" }),
+        new SuggestionEngine({ url : "http://en.wikipedia.com/", favicon : "http://g.etfv.co/http://en.wikipedia.com/" })
+      ]);
+      sl.each(function(engine) {
+        console.log("engine", engine.id);
+        // for every engine set the same suggestions
+        engine.setSuggestions(["news", "and", "stuff"]);
+      });
+      hl.reset([
+        new HistoryItem({ url : "https://www.dropbox.com/", favicon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "title" : "Dropbox" }),
+        new HistoryItem({ url : "http://www.yelp.com/", favicon : "http://g.etfv.co/http://www.cbc.ca/", "title" : "Yelp" }),
+        new HistoryItem({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.cnn.com/", "title" : "Amazon" }),
+        new HistoryItem({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/", "title" : "NPR" }),
+      ]);
+    });
+  </script>
+
+</head>
+<body>
+    <div id="change">Change</div>
+    <div id="content">
+        <div id="resultbox">
+        <ol class="results search">
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://www.google.com/"/>
+                <div class="items"><span class="item">npr</span> <span class="item">news</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico"/>
+                <div class="items"><span class="item">local</span> <span class="item">results</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://www.amazon.com/"/>
+                <div class="items"><span class="item">shopping</span> <span class="item">reviews</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://www.npr.org/"/>
+                <div class="items"><span class="item">headlines</span> <span class="item">politics</span></div>
+            </li>
+            <li class="suggestions">
+                <img src="http://g.etfv.co/http://en.wikipedia.com/"/>
+                <div class="items"><span class="item">News</span> <span class="item">Story</span></div>
+            </li>
+        </ol>
+        <ol class="results history">
+            <li>
+                <div class="col"><img src="https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico"/></div>
+                <div class="col">
+                    <div class="title">Dropbox</div>
+                    <div class="url">dropbox.com</div>
+                </div>
+            </li>
+            <li>
+                <div class="col"><img src="http://g.etfv.co/http://www.cbc.ca/"/></div>
+                <div class="col">
+                    <div class="title">CBC</div>
+                    <div class="url">cbc.ca</div>
+                </div>
+            </li>
+            <li>
+                <div class="col"><img src="http://g.etfv.co/http://www.cnn.com/"/></div>
+                <div class="col">
+                    <div class="title">CNN</div>
+                    <div class="url">cnn.com</div>
+                </div>
+            </li>
+            <li>
+                <div class="col"><img src="http://g.etfv.co/http://www.npr.org/"/></div>
+                <div class="col">
+                    <div class="title">NPR</div>
+                    <div class="url">npr.org</div>
+                </div>
+            </li>
+        </ol>
+        </div>
+    </div>
+</body>
+</html>
