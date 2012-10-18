@@ -19,12 +19,12 @@
   <link href="http://necolas.github.com/normalize.css/2.0.1/normalize.css" rel="stylesheet">
 
   <script type="text/template" id="suggestion-engine-template">
-    <span class="engine suggestion">
+    <div class="engine suggestion">
         <img src="<%= get('favicon') %>"/>
         <% _.each(items.models, function(item) { %>
           <span class="item"><%= item.get('value') %></span> 
         <% }); %>
-    </span>
+    </div>
   </script>
 
   <script type="text/template" id="suggestion-others-template">
@@ -56,6 +56,7 @@
   <style type="text/css">
     body {
         font-size: 14px;
+        font-family: sans-serif;
         color: #333;
         width: 100%;
     }
@@ -78,7 +79,7 @@
     .results li img {
         width: 16px;
         height: 16px;
-        margin: 4px;
+        margin: 0 4px;
     }
     .results li .col {
         vertical-align: top;
@@ -96,26 +97,27 @@
 
     .results li .engine.suggestion {
       white-space: nowrap;
-      font-size: 12px;
-      -moz-box-shadow:inset 0px 1px 0px 0px #6886c6;
-      -webkit-box-shadow:inset 0px 1px 0px 0px #6886c6;
-      box-shadow:inset 0px 1px 0px 0px #6886c6;
-      background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #6886c6), color-stop(1, #3B5998) );
-      background:-moz-linear-gradient( center top, #6886c6 5%, #3B5998 100% );
+      background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #7c9feb), color-stop(1, #4e77ca) );
+      background:-moz-linear-gradient( center top, #7c9feb 5%, #4e77ca 100% );
       background-color:#6886c6;
       -moz-border-radius:4px;
       -webkit-border-radius:4px;
       border-radius:4px;
-      border:1px solid #466cb7;
+      border:1px solid #4e77ca;
       color:#fff;
-      padding:2px 2px;
-      margin-right: 2px;
-      text-shadow:1px 1px 0px #3B5998;
+      padding: 0 4px 0 0;
+      margin-right: 4px;
+      text-shadow:1px 1px 0px #314b7f;
+      display: inline-block;
+    }
+    .engine.suggestion .item {
+      font-size: 12px;
+      line-height: 20px;
     }
     .results li .engine.suggestion img {
-      border-right: 1px solid #3B5998;
+      border-right: 1px solid #4e77ca;
       padding-right: 4px;
-      margin-right: 2px;
+      margin-right: 0px;
     }
     .results.search li img {
         vertical-align: middle;
@@ -125,11 +127,8 @@
     }
     .results li .items .item {
       font-size: 12px;
-      -moz-box-shadow:inset 0px 1px 0px 0px #6886c6;
-      -webkit-box-shadow:inset 0px 1px 0px 0px #6886c6;
-      box-shadow:inset 0px 1px 0px 0px #6886c6;
-      background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #6886c6), color-stop(1, #3B5998) );
-      background:-moz-linear-gradient( center top, #6886c6 5%, #3B5998 100% );
+      background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #7c9feb), color-stop(1, #4e77ca) );
+      background:-moz-linear-gradient( center top, #7c9feb 5%, #4e77ca 100% );
       background-color:#6886c6;
       -moz-border-radius:4px;
       -webkit-border-radius:4px;
@@ -137,7 +136,7 @@
       border:1px solid #466cb7;
       color:#fff;
       padding: 2px 4px;
-      text-shadow:1px 1px 0px #3B5998;
+      text-shadow:1px 1px 0px #314b7f;
     }
   </style>
   <script type="text/javascript">
