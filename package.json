@@ -32,6 +32,13 @@
         "value": true
     },
     {
+        "name" : "version",
+        "title": "Layout version",
+        "description": "Which layout version you would like to test",
+        "type": "integer",
+        "value": 2
+    },
+    {
         "type": "control",
         "label": "Search Preferences",
         "name": "preferences",
