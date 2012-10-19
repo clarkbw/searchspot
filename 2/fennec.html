@@ -239,7 +239,11 @@
       var engine = value.engine,
           results = value.results;
       console.log(value.terms, engine.siteURL, results);
-      sl.create({ url : engine.siteURL, favicon : engine.icon }).setSuggestions(results);
+      var suggestengine = sl.get(engine.siteURL);
+      if (!suggestengine) {
+        suggestengine = sl.create({ url : engine.siteURL, favicon : engine.icon });
+      }
+      suggestengine.setSuggestions(results);
     };
 
     window.onHistoryChanged = function (herstory) {
