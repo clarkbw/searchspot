@@ -136,6 +136,9 @@
     }
   </style>
   <script type="text/javascript">
+    // we don't want the default sync methods, just display
+    Backbone.sync = function(method, model, options) {};
+
     var HistoryItem = Backbone.Model.extend({
     });
     var SuggestionItem = Backbone.Model.extend({
@@ -282,6 +285,9 @@
       //  // for every engine set the same suggestions
       //  engine.setSuggestions(["news", "and", "stuff"]);
       //});
+      window.onSuggestions({engine :{ siteURL : "http://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
+                            terms : "new",
+                            results : ["news", "and", "stuff"]});
       hl.reset([
         new HistoryItem({ url : "https://www.dropbox.com/", favicon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "title" : "Dropbox" }),
         new HistoryItem({ url : "http://www.yelp.com/", favicon : "http://g.etfv.co/http://www.cbc.ca/", "title" : "Yelp" }),
