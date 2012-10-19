@@ -214,7 +214,7 @@
       template : _.template($("#suggestion-engine-template").html()),
       className : "results search",
       initialize: function () {
-        this.collection.on("reset", this.render, this);
+        this.collection.on("all", this.render, this);
       },
       render : function render() {
         $(this.el).empty();
@@ -299,21 +299,23 @@
                 <img src="http://g.etfv.co/http://www.google.com/"/>
                 <div class="items"><span class="item">npr</span> <span class="item">news</span></div>
             </li>
-            <li class="suggestions">
-                <img src="http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico"/>
-                <div class="items"><span class="item">local</span> <span class="item">results</span></div>
-            </li>
-            <li class="suggestions">
-                <img src="http://g.etfv.co/http://www.amazon.com/"/>
-                <div class="items"><span class="item">shopping</span> <span class="item">reviews</span></div>
-            </li>
-            <li class="suggestions">
-                <img src="http://g.etfv.co/http://www.npr.org/"/>
-                <div class="items"><span class="item">headlines</span> <span class="item">politics</span></div>
-            </li>
-            <li class="suggestions">
-                <img src="http://g.etfv.co/http://en.wikipedia.com/"/>
-                <div class="items"><span class="item">News</span> <span class="item">Story</span></div>
+            <li class="suggestions.others">
+              <div class="engine suggestion">
+                  <img src="http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico"/>
+                  <span class="item">Pizza</span> 
+              </div>
+              <div class="engine suggestion">
+                  <img src="http://g.etfv.co/http://www.amazon.com/"/>
+                  <span class="item">DVDs</span> 
+              </div>
+              <div class="engine suggestion">
+                  <img src="http://g.etfv.co/http://www.npr.org/"/>
+                  <span class="item">News</span> 
+              </div>
+              <div class="engine suggestion">
+                  <img src="http://g.etfv.co/http://en.wikipedia.com/"/>
+                  <span class="item">Article</span> 
+              </div>
             </li>
         </ol>
         <ol class="results history">
