@@ -236,6 +236,9 @@
 
     window.onSuggestions = function(value) {
       $("body").append($("<div/>").text(JSON.stringify(value)));
+      var engine = value.engine,
+          results = value.results;
+      sl.getEngineById(engine.id).setSuggestions(results);
     };
 
     window.onHistoryChanged = function (herstory) {
