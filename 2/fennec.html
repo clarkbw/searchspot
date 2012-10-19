@@ -239,7 +239,7 @@
       var engine = value.engine,
           results = value.results;
       console.log(value.terms, engine.siteURL, results);
-      sl.getEngineById(engine.siteURL).setSuggestions(results);
+      sl.create({ url : engine.siteURL, favicon : engine.icon }).setSuggestions(results);
     };
 
     window.onHistoryChanged = function (herstory) {
@@ -267,17 +267,17 @@
       var hlv = new HistoryListView({collection:hl, el:$(".results.history")});
 
       // XXX This is all for testing!
-      sl.reset([
-        new SuggestionEngine({ url : "http://www.google.com/", favicon : "http://g.etfv.co/http://www.google.com/" }),
-        new SuggestionEngine({ url : "http://www.yelp.com/", favicon : "http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico" }),
-        new SuggestionEngine({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.amazon.com/" }),
-        new SuggestionEngine({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/" }),
-        new SuggestionEngine({ url : "http://en.wikipedia.com/", favicon : "http://g.etfv.co/http://en.wikipedia.com/" })
-      ]);
-      sl.each(function(engine) {
-        // for every engine set the same suggestions
-        engine.setSuggestions(["news", "and", "stuff"]);
-      });
+      //sl.reset([
+      //  new SuggestionEngine({ url : "http://www.google.com/", favicon : "http://g.etfv.co/http://www.google.com/" }),
+      //  new SuggestionEngine({ url : "http://www.yelp.com/", favicon : "http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico" }),
+      //  new SuggestionEngine({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.amazon.com/" }),
+      //  new SuggestionEngine({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/" }),
+      //  new SuggestionEngine({ url : "http://en.wikipedia.com/", favicon : "http://g.etfv.co/http://en.wikipedia.com/" })
+      //]);
+      //sl.each(function(engine) {
+      //  // for every engine set the same suggestions
+      //  engine.setSuggestions(["news", "and", "stuff"]);
+      //});
       hl.reset([
         new HistoryItem({ url : "https://www.dropbox.com/", favicon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "title" : "Dropbox" }),
         new HistoryItem({ url : "http://www.yelp.com/", favicon : "http://g.etfv.co/http://www.cbc.ca/", "title" : "Yelp" }),
