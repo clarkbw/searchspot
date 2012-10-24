@@ -221,7 +221,10 @@
       },
       render : function render() {
         $(this.el).empty();
-        $(this.el).append(this.dtemplate(this.collection.getDefaultEngine()));
+        var def = this.collection.getDefaultEngine();
+        if (def) {
+          $(this.el).append(this.dtemplate(def));
+        }
         var others = $(this.otemplate());
         $(this.el).append(others);
         _.each(this.collection.models, function(model) {
@@ -240,10 +243,11 @@
     window.onSuggestions = function(value) {
       //$("body").append($("<div/>").text(JSON.stringify(value)));
       var engine = value.engine,
-          results = value.results;
-      console.log(value.terms, engine.siteURL, results);
+          results = value.results,
+          terms = value.terms;
+
       var suggestengine = sl.get(engine.siteURL);
-      if (!suggestengine) {
+      if (typeof suggestengine === "undefined") {
         suggestengine = sl.create({ url : engine.siteURL, favicon : engine.icon });
       }
       suggestengine.setSuggestions(results);
@@ -285,15 +289,18 @@
       //  // for every engine set the same suggestions
       //  engine.setSuggestions(["news", "and", "stuff"]);
       //});
-      window.onSuggestions({engine :{ siteURL : "http://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
-                            terms : "new",
-                            results : ["news", "and", "stuff"]});
-      hl.reset([
-        new HistoryItem({ url : "https://www.dropbox.com/", favicon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "title" : "Dropbox" }),
-        new HistoryItem({ url : "http://www.yelp.com/", favicon : "http://g.etfv.co/http://www.cbc.ca/", "title" : "Yelp" }),
-        new HistoryItem({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.cnn.com/", "title" : "Amazon" }),
-        new HistoryItem({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/", "title" : "NPR" }),
-      ]);
+      //window.onSuggestions({engine : { siteURL : "https://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
+      //                      terms : "news",
+      //                      results : ["more news", "with and", "going stuff"]});
+      //window.onSuggestions({engine :{ siteURL : "https://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
+      //                      terms : "new",
+      //                      results : ["news", "and", "stuff"]});
+      //hl.reset([
+      //  new HistoryItem({ url : "https://www.dropbox.com/", favicon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "title" : "Dropbox" }),
+      //  new HistoryItem({ url : "http://www.yelp.com/", favicon : "http://g.etfv.co/http://www.cbc.ca/", "title" : "Yelp" }),
+      //  new HistoryItem({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.cnn.com/", "title" : "Amazon" }),
+      //  new HistoryItem({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/", "title" : "NPR" }),
+      //]);
     });
   </script>
 
@@ -301,7 +308,7 @@
 <body>
     <div id="content">
         <ol class="results search">
-            <li class="suggestions">
+<!--            <li class="suggestions">
                 <img src="http://g.etfv.co/http://www.google.com/"/>
                 <div class="items"><span class="item">npr</span> <span class="item">news</span></div>
             </li>
@@ -322,10 +329,10 @@
                   <img src="http://g.etfv.co/http://en.wikipedia.com/"/>
                   <span class="item">Article</span> 
               </div>
-            </li>
+            </li>-->
         </ol>
         <ol class="results history">
-            <li>
+<!--            <li>
                 <div class="col"><img src="https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico"/></div>
                 <div class="col">
                     <div class="title">Dropbox</div>
@@ -352,7 +359,7 @@
                     <div class="title">NPR</div>
                     <div class="url">npr.org</div>
                 </div>
-            </li>
+            </li>-->
         </ol>
     </div>
 </body>
