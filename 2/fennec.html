@@ -22,7 +22,7 @@
     <div class="engine suggestion">
         <img src="<%= get('favicon') %>"/>
         <% _.each(items.models, function(item) { %>
-          <span class="item"><%= item.get('value') %></span> 
+          <span class="item"><%= item.get('value') %></span>&nbsp;
         <% }); %>
     </div>
   </script>
@@ -34,10 +34,10 @@
 
   <script type="text/template" id="suggestion-default-template">
     <li class="suggestions">
-        <img src="<%= get('favicon') %>"/>
         <div class="items">
+          <img src="<%= get('favicon') %>"/>
           <% _.each(items.models, function(item) { %>
-            <span class="item"><%= item.get('value') %></span> 
+            <span class="item"><%= item.get('value') %></span>&nbsp;
           <% }); %>
         </div>
     </li>
@@ -104,14 +104,15 @@
       border-radius:2px;
       color:#2D2D2E;
       padding: 0 4px 0 0;
+      margin: 2px 0;
       display: inline-block;
     }
     .engine.suggestion .item {
-      font-size: 12px;
+      font-size: 14px;
       line-height: 20px;
     }
     .results li .engine.suggestion img {
-      border-right: 1px solid #7D8087;
+      border-right: 1px solid #b4b8c2;
       padding-right: 4px;
       margin-right: 0px;
     }
@@ -122,7 +123,7 @@
         display: inline-block;
     }
     .results li .items .item {
-      font-size: 14px;
+      font-size: 16px;
       white-space: nowrap;
       background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #E2E7EC), color-stop(1, #D2DAE2) );
       background:-moz-linear-gradient( center top, #E2E7EC 5%, #D2DAE2 100% );
@@ -132,6 +133,7 @@
       border-radius:2px;
       color:#2D2D2E;
       padding: 2px 4px;
+      margin: 2px 0;
       display: inline-block;
     }
   </style>
@@ -277,30 +279,36 @@
       // sets up the history list view
       var hlv = new HistoryListView({collection:hl, el:$(".results.history")});
 
-      // XXX This is all for testing!
-      //sl.reset([
-      //  new SuggestionEngine({ url : "http://www.google.com/", favicon : "http://g.etfv.co/http://www.google.com/" }),
-      //  new SuggestionEngine({ url : "http://www.yelp.com/", favicon : "http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico" }),
-      //  new SuggestionEngine({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.amazon.com/" }),
-      //  new SuggestionEngine({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/" }),
-      //  new SuggestionEngine({ url : "http://en.wikipedia.com/", favicon : "http://g.etfv.co/http://en.wikipedia.com/" })
-      //]);
-      //sl.each(function(engine) {
-      //  // for every engine set the same suggestions
-      //  engine.setSuggestions(["news", "and", "stuff"]);
-      //});
-      //window.onSuggestions({engine : { siteURL : "https://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
-      //                      terms : "news",
-      //                      results : ["more news", "with and", "going stuff"]});
-      //window.onSuggestions({engine :{ siteURL : "https://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
-      //                      terms : "new",
-      //                      results : ["news", "and", "stuff"]});
-      //hl.reset([
-      //  new HistoryItem({ url : "https://www.dropbox.com/", favicon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "title" : "Dropbox" }),
-      //  new HistoryItem({ url : "http://www.yelp.com/", favicon : "http://g.etfv.co/http://www.cbc.ca/", "title" : "Yelp" }),
-      //  new HistoryItem({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.cnn.com/", "title" : "Amazon" }),
-      //  new HistoryItem({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/", "title" : "NPR" }),
-      //]);
+      if (window.location.hostname !== "clarkbw.github.com") {
+        // This is all for local testing
+        sl.reset([
+          new SuggestionEngine({ url : "http://www.google.com/", favicon : "http://g.etfv.co/http://www.google.com/" }),
+          new SuggestionEngine({ url : "http://www.yelp.com/", favicon : "http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico" }),
+          new SuggestionEngine({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.amazon.com/" }),
+          new SuggestionEngine({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/" }),
+          new SuggestionEngine({ url : "http://en.wikipedia.com/", favicon : "http://g.etfv.co/http://en.wikipedia.com/" })
+        ]);
+        sl.each(function(engine, i) {
+          if (engine.id === "http://www.google.com") {
+            engine.setSuggestions(["news stories with", "long amounts", "of text that won't wrap"]);
+          } else {
+            engine.setSuggestions(["news stories with", "long amounts", "of text that won't wrap"].slice(i % 3));
+          }
+        });
+        window.onSuggestions({engine : { siteURL : "https://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
+                              terms : "news",
+                              results : ["more news", "with and", "going stuff"]});
+        window.onSuggestions({engine :{ siteURL : "https://www.google.com/", icon : "http://g.etfv.co/http://www.google.com/" },
+                              terms : "new",
+                              results : ["news", "and", "stuff"]});
+        hl.reset([
+          new HistoryItem({ url : "https://www.dropbox.com/", favicon : "https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico", "title" : "Dropbox" }),
+          new HistoryItem({ url : "http://www.yelp.com/", favicon : "http://g.etfv.co/http://www.cbc.ca/", "title" : "Yelp" }),
+          new HistoryItem({ url : "http://www.amazon.com/", favicon : "http://g.etfv.co/http://www.cnn.com/", "title" : "Amazon" }),
+          new HistoryItem({ url : "http://www.npr.org/", favicon : "http://g.etfv.co/http://www.npr.org/", "title" : "NPR" }),
+        ]);
+      }
+
     });
   </script>
 
