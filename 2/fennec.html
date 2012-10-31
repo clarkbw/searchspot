@@ -139,6 +139,15 @@
     // we don't want the default sync methods, just display
     Backbone.sync = function(method, model, options) {};
 
+    if (! window.nativeBrowser) {
+      nativeBrowser = {
+        onClickSuggestion: function(arg0, arg1) {
+          console.log(arg0, arg1);
+        }
+      }
+    }
+
+
     var HistoryItem = Backbone.Model.extend({
     });
     var SuggestionItem = Backbone.Model.extend({
@@ -222,13 +231,13 @@
     var SuggestionDefaultView = SuggestionView.extend({
       template : _.template($("#suggestion-default-template").html()),
       onClickSuggestion : function onClickSuggestion(ev) {
-        console.log(this.model.id, $(ev.target).text());
+        nativeBrowser.onClickSuggestion(this.model.id, $(ev.target).text());
       },
     });
     var SuggestionEngineView = SuggestionView.extend({
       template : _.template($("#suggestion-engine-template").html()),
       onClickSuggestion : function onClickSuggestion(ev) {
-        console.log(this.model.id, this.model.items.models[0].get("value"));
+        nativeBrowser.onClickSuggestion(this.model.id, this.model.items.models[0].get("value"));
       },
     });
 
