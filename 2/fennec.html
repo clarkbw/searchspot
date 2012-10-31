@@ -207,14 +207,34 @@
       }
     });
 
+    var SuggestionView = Backbone.View.extend({
+      initialize: function () {
+        this.model.on("all", this.render, this);
+      },
+      events : {
+        "click .item" : "onClickSuggestion"
+      },
+      onClickSuggestion : function onClickSuggestion(ev) {
+        console.log(this.model.id, $(ev.target).text());
+      },
+      render : function () {
+        $(this.el).html(this.template(this.model));
+        return this;
+      }
+    });
+    var SuggestionDefaultView = SuggestionView.extend({
+      template : _.template($("#suggestion-default-template").html())
+    });
+    var SuggestionEngineView = SuggestionView.extend({
+      template : _.template($("#suggestion-engine-template").html())
+    });
+
     // suggestion engines with suggestions list data
     // usage: sl.getEngineById('http://www.google.com/').setSuggestions(['bryan', 'clark']);
     var sl = new SuggestionList();
 
     var SuggestionListView = Backbone.View.extend({
-      dtemplate : _.template($("#suggestion-default-template").html()),
-      otemplate : _.template($("#suggestion-others-template").html()),
-      template : _.template($("#suggestion-engine-template").html()),
+      template : _.template($("#suggestion-others-template").html()),
       className : "results search",
       initialize: function () {
         this.collection.on("all", this.render, this);
@@ -223,13 +243,13 @@
         $(this.el).empty();
         var def = this.collection.getDefaultEngine();
         if (def) {
-          $(this.el).append(this.dtemplate(def));
+          $(this.el).append((new SuggestionDefaultView({model:def})).render().el);
         }
-        var others = $(this.otemplate());
+        var others = $(this.template());
         $(this.el).append(others);
         _.each(this.collection.models, function(model) {
           if (!model.isDefault()) {
-            $(others).append(this.template(model));
+            $(others).append((new SuggestionEngineView({model:model})).render().el);
           }
         }, this);
         return this;
