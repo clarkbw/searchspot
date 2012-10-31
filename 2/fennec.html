@@ -19,8 +19,8 @@
 
   <script type="text/template" id="suggestion-engine-template">
     <div class="engine suggestion">
-        <img src="<%= get('favicon') %>"/>
         <% _.each(items.models, function(item) { %>
+          <img class="item" src="<%= get('favicon') %>"/>
           <span class="item"><%= item.get('value') %></span>&nbsp;
         <% }); %>
     </div>
@@ -214,19 +214,22 @@
       events : {
         "click .item" : "onClickSuggestion"
       },
-      onClickSuggestion : function onClickSuggestion(ev) {
-        console.log(this.model.id, $(ev.target).text());
-      },
       render : function () {
         $(this.el).html(this.template(this.model));
         return this;
       }
     });
     var SuggestionDefaultView = SuggestionView.extend({
-      template : _.template($("#suggestion-default-template").html())
+      template : _.template($("#suggestion-default-template").html()),
+      onClickSuggestion : function onClickSuggestion(ev) {
+        console.log(this.model.id, $(ev.target).text());
+      },
     });
     var SuggestionEngineView = SuggestionView.extend({
-      template : _.template($("#suggestion-engine-template").html())
+      template : _.template($("#suggestion-engine-template").html()),
+      onClickSuggestion : function onClickSuggestion(ev) {
+        console.log(this.model.id, this.model.items.models[0].get("value"));
+      },
     });
 
     // suggestion engines with suggestions list data
