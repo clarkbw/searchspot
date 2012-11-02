@@ -18,28 +18,23 @@
   <link href="../css/normalize.css" rel="stylesheet">
 
   <script type="text/template" id="suggestion-engine-template">
-    <div class="engine suggestion">
-        <% _.each(items.models, function(item) { %>
-          <img class="item" src="<%= get('favicon') %>"/>
-          <span class="item"><%= item.get('value') %></span>&nbsp;
-        <% }); %>
-    </div>
+      <% _.each(items.models, function(item) { %>
+        <img src="<%= get('favicon') %>"/>
+        <span class="item"><%= item.get('value') %></span>&nbsp;
+      <% }); %>
   </script>
 
   <script type="text/template" id="suggestion-others-template">
-    <li class="suggestions.others">
-    </li>
+    <li class="suggestions others"></li>
   </script>
 
   <script type="text/template" id="suggestion-default-template">
-    <li class="suggestions">
-        <div class="items">
-          <img src="<%= get('favicon') %>"/>
-          <% _.each(items.models, function(item) { %>
-            <span class="item"><%= item.get('value') %></span>&nbsp;
-          <% }); %>
-        </div>
-    </li>
+    <div class="items">
+      <img src="<%= get('favicon') %>"/>
+      <% _.each(items.models, function(item) { %>
+        <span class="item"><%= item.get('value') %></span>&nbsp;
+      <% }); %>
+    </div>
   </script>
 
   <script type="text/template" id="history-template">
@@ -105,8 +100,9 @@
       border-radius:2px;
       color:#2D2D2E;
       padding: 0 4px 0 0;
-      margin: 2px 0;
+      margin: 2px 4px 2px 0;
       display: inline-block;
+      vertical-align: middle;
     }
     .results li .engine.suggestion img {
       border-right: 1px solid #b4b8c2;
@@ -114,12 +110,12 @@
       margin-right: 0px;
     }
     .results.search li img {
-        vertical-align: middle;
+      vertical-align: middle;
     }
     .results li .items {
         display: inline-block;
     }
-    .results li .items .item {
+    .suggestions.defaults .items .item {
       font-size: 20px;
       line-height: 32px;
       white-space: nowrap;
@@ -131,8 +127,9 @@
       border-radius:2px;
       color:#2D2D2E;
       padding: 2px 4px;
-      margin: 2px 0;
+      margin: 2px 4px 2px 0;
       display: inline-block;
+      vertical-align: middle;
     }
   </style>
   <script type="text/javascript">
@@ -217,6 +214,7 @@
     });
 
     var SuggestionView = Backbone.View.extend({
+      className : "engine suggestion",
       initialize: function () {
         this.model.on("all", this.render, this);
       },
@@ -230,6 +228,8 @@
     });
     var SuggestionDefaultView = SuggestionView.extend({
       template : _.template($("#suggestion-default-template").html()),
+      className : "suggestions defaults",
+      tagName : "li",
       onClickSuggestion : function onClickSuggestion(ev) {
         nativeBrowser.onClickSuggestion(this.model.id, $(ev.target).text());
       },
@@ -247,7 +247,8 @@
 
     var SuggestionListView = Backbone.View.extend({
       template : _.template($("#suggestion-others-template").html()),
-      className : "results search",
+      tagName : "li",
+      className : "results",
       initialize: function () {
         this.collection.on("all", this.render, this);
       },
@@ -345,60 +346,8 @@
 </head>
 <body>
     <div id="content">
-        <ol class="results search">
-<!--            <li class="suggestions">
-                <img src="http://g.etfv.co/http://www.google.com/"/>
-                <div class="items"><span class="item">npr</span> <span class="item">news</span></div>
-            </li>
-            <li class="suggestions.others">
-              <div class="engine suggestion">
-                  <img src="http://s3-media4.ak.yelpcdn.com/assets/2/www/img/1273e7149fc0/ico/favicon_multi.ico"/>
-                  <span class="item">Pizza</span> 
-              </div>
-              <div class="engine suggestion">
-                  <img src="http://g.etfv.co/http://www.amazon.com/"/>
-                  <span class="item">DVDs</span> 
-              </div>
-              <div class="engine suggestion">
-                  <img src="http://g.etfv.co/http://www.npr.org/"/>
-                  <span class="item">News</span> 
-              </div>
-              <div class="engine suggestion">
-                  <img src="http://g.etfv.co/http://en.wikipedia.com/"/>
-                  <span class="item">Article</span> 
-              </div>
-            </li>-->
-        </ol>
-        <ol class="results history">
-<!--            <li>
-                <div class="col"><img src="https://www.dropbox.com/static/images/favicon-vfl7PByQm.ico"/></div>
-                <div class="col">
-                    <div class="title">Dropbox</div>
-                    <div class="url">dropbox.com</div>
-                </div>
-            </li>
-            <li>
-                <div class="col"><img src="http://g.etfv.co/http://www.cbc.ca/"/></div>
-                <div class="col">
-                    <div class="title">CBC</div>
-                    <div class="url">cbc.ca</div>
-                </div>
-            </li>
-            <li>
-                <div class="col"><img src="http://g.etfv.co/http://www.cnn.com/"/></div>
-                <div class="col">
-                    <div class="title">CNN</div>
-                    <div class="url">cnn.com</div>
-                </div>
-            </li>
-            <li>
-                <div class="col"><img src="http://g.etfv.co/http://www.npr.org/"/></div>
-                <div class="col">
-                    <div class="title">NPR</div>
-                    <div class="url">npr.org</div>
-                </div>
-            </li>-->
-        </ol>
+        <ol class="results search"></ol>
+        <ol class="results history"></ol>
     </div>
 </body>
 </html>
