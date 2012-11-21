@@ -307,8 +307,6 @@
       var options = {};
       if (window.location.search)
         try {
-          console.log(window.location.search.substr(1));
-          console.log(decodeURI(window.location.search.substr(1)));
           options = JSON.parse(decodeURI(window.location.search.substr(1)));
         } catch (e) {
           console.log(e);
