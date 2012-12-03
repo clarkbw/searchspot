@@ -304,13 +304,22 @@
     );
 
     $(document).ready(function () {
+      var options = {};
+      if (window.location.search)
+        try {
+          options = JSON.parse(decodeURI(window.location.search.substr(1)));
+        } catch (e) {
+          console.log(e);
+        }
+      console.log("Options = "+JSON.stringify(options));
+
       $(".results").disableSelection();
       // sets up the suggestions list view
       var slv = new SuggestionListView({collection:sl, el:$(".results.search")});
       // sets up the history list view
       var hlv = new HistoryListView({collection:hl, el:$(".results.history")});
 
-      if (window.location.hostname !== "clarkbw.github.com") {
+      if (options.testing) {
         // This is all for local testing
         sl.reset([
           new SuggestionEngine({ url : "http://www.google.com/", favicon : "http://g.etfv.co/http://www.google.com/" }),
