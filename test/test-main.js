@@ -3,7 +3,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-var Loader = require("test-harness/loader").Loader;
+var Loader = require("sdk/test/loader").Loader;
 
 var isBrowser = require("window/utils").isBrowser;
 var winUtils = require("window-utils");
@@ -53,18 +53,14 @@ exports["zzz last test uninstall"] = function (test) {
 exports["clear search on tab close"] = function (test) {
   var loader = new Loader(module),
       main = loader.require("main"),
-      StatisticsReporter = loader.require("statistics").StatisticsReporter,
       document = winUtils.activeBrowserWindow.document,
-      event1 = document.createEvent("KeyboardEvent"),
-      event2 = document.createEvent("KeyboardEvent"),
-      searchtab = null;
+      event = document.createEvent("KeyEvents");
 
-  StatisticsReporter.allowed = true;
   main.main();
 
   tabs.on("ready", function (tab) {
     // ignore the tab we opened and any other tabs being opened by other tests
-    if (tab.url !== "about:home" && tab.url.indexOf("resource://") !== 0) {
+    if (tab.url !== "about:blank" && tab.url.indexOf("resource://") !== 0) {
       test.assertEqual(searchbar.getSearchTextBox().value, "harry",
                        "Selected suggestion should be equal to the text entry");
       tab.close();
@@ -73,41 +69,31 @@ exports["clear search on tab close"] = function (test) {
 
   // open a new tab an run a search in it
   tabs.open({
-    url : "about:home",
+    url : "about:blank",
     inBackground : false,
     onOpen: function onOpen(tab) {
-      searchtab = tab;
       // set a new search
       searchbar.getSearchTextBox().value = "harry";
-      // send a key event to trigger the fact that we are searching "y"
-      event1.initKeyEvent("keyup",        //  in DOMString typeArg,
-                         true,             //  in boolean canBubbleArg,
-                         true,             //  in boolean cancelableArg,
-                         null,             //  in nsIDOMAbstractView viewArg
-                         false,            //  in boolean ctrlKeyArg,
-                         false,            //  in boolean altKeyArg,
-                         false,            //  in boolean shiftKeyArg,
-                         false,            //  in boolean metaKeyArg,
-                         89,               //  in unsigned long keyCodeArg,
-                         0);              //  in unsigned long charCodeArg
-      searchbar.getSearchTextBox().dispatchEvent(event1);
+    },
+    onReady : function onReady(tabs) {
       searchbar.getSearchTextBox().focus();
 
       // give the panel a moment to open and initialize
       timer.setTimeout(function () {
         // send a key event to trigger a search via the "enter key"
-        event2.initKeyEvent("keyup",        //  in DOMString typeArg,
+        event.initKeyEvent("keyup",        //  in DOMString typeArg,
                            true,             //  in boolean canBubbleArg,
                            true,             //  in boolean cancelableArg,
-                           null,             //  in nsIDOMAbstractView viewArg
+                           winUtils.activeBrowserWindow.document.defaultView,             //  in nsIDOMAbstractView viewArg
                            false,            //  in boolean ctrlKeyArg,
                            false,            //  in boolean altKeyArg,
                            false,            //  in boolean shiftKeyArg,
                            false,            //  in boolean metaKeyArg,
-                           13,               //  in unsigned long keyCodeArg,
+                           0x0D,               //  in unsigned long keyCodeArg,
                            0);              //  in unsigned long charCodeArg
-        searchbar.getSearchTextBox().dispatchEvent(event2);
-      }, 1 * 3000);
+        searchbar.getSearchTextBox().focus();
+        searchbar.getSearchTextBox().dispatchEvent(event);
+      }, 2 * 1000);
     },
     onClose : function onClose(tab) {
       // escape from our other onClose function
@@ -119,5 +105,5 @@ exports["clear search on tab close"] = function (test) {
       }, 100);
     }
   });
-  test.waitUntilDone();
+  test.waitUntilDone(10 * 1000);
 };

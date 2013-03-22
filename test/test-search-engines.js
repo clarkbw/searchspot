@@ -71,9 +71,8 @@ exports.test3RemovingDefaultAddsOthers = function(test) {
     test.done();
   });
 
-  SearchEngines.defaults.add(ExampleSearchEngine).then(function(engine) {
-    SearchEngines.defaults.remove(engine);
-  });
+  SearchEngines.defaults.add(ExampleSearchEngine);
+  SearchEngines.defaults.remove(ExampleSearchEngine);
 
   test.waitUntilDone(5 * 1000);
 }

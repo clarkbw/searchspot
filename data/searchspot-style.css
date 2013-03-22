@@ -6,11 +6,11 @@
   display: none;
 }
 .searchbar-textbox .textbox-input-box {
-  padding-left: 10px;
+  padding-left: 10px !important;
 }
 
 #searchspot-panel {
   overflow: hidden;
-  -moz-transition: all 1s; 
-  transition: all 1s;
+  -moz-transition: all 0.5s; 
+  transition: all 0.5s;
 }

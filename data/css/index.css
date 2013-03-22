@@ -1,6 +1,8 @@
-.engines {
-  cursor: move;
+.navbar .brand {
+  float: right;
+  font-weight: bold;
 }
+
 #defaults, #others {
   margin: 20px 0;
 }
@@ -10,19 +12,10 @@
   border: 1px solid #ccc;
   margin: 5px auto;
   background-color: #fff;
+  cursor: move;
 }
 .engine-view.ui-sortable-helper {
   box-shadow: 4px 4px 8px #aaa;
-}
-#defaults .btn.add {
-  display: none;
-}
-#others .btn.remove {
-  display: none;
-}
-.btn {
-  font-weight: bold;
-  cursor: pointer;
 }
 img {
   vertical-align: middle;

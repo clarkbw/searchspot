@@ -27,7 +27,7 @@ exports.testUsage = function(test) {
       stat["suggestions"] = 3;
       stat["index"] = 0;
 
-  let server = require("httpd").startServerAsync(8080);
+  let server = require("sdk/test/httpd").startServerAsync(8080);
   server.registerPathHandler("/service", function handle(request, response) {
     response.setHeader("Content-Type", "application/json");
     var body = "",

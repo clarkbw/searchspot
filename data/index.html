@@ -10,17 +10,8 @@
   <title>Awesome Search</title>
   <link href="css/bootstrap.css" rel="stylesheet">
   <link href="css/bootstrap-responsive.css" rel="stylesheet">
-  <link href="css/preferences.css" rel="stylesheet">
+  <link href="css/index.css" rel="stylesheet">
 
-  <style type="text/css">
-    .navbar {
-      padding-bottom: 60px;
-    }
-    .navbar .brand {
-      float: right;
-      font-weight: bold;
-    }
-  </style>
 </head>
 <body>
 
@@ -60,6 +51,11 @@
     </div>
   </div>
 
+  <div id="welcome" class="container">
+    <h1>Welcome to Awesome Search!</h1>
+    <a href="#" onclick="$('#geoPermission').modal('show');return false;" role="button" class="btn" data-toggle="modal">Launch demo modal</a>
+  </div>
+
   <footer class="footer">
     <div class="container">
       <p>The <a href="https://addons.mozilla.org/en-US/firefox/addon/awesome-search/">Awesome Search</a> add-on was designed and built by <a href="http://clarkbw.net/">Bryan Clark</a>.  Thank you for using it.</p>
@@ -67,37 +63,57 @@
     </div>
   </footer>
 
+  <script type="text/template" id="geo-permission-template">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      <h3>Geolocation Permission</h3>
+      <small class="muted">This search engine requires your location to provide results</small>
+    </div>
+    <div class="modal-body">
+        <h4 class="name"><img class='icon' src="<%= get("icon") %>"/> <%= get("name") %></h4>
+        <div>
+          <span class="url"><%= trimUrl() %></span>
+        </div>
+    </div>
+    <div class="modal-footer">
+      <a href="#" data-dismiss="modal" class="btn cancel">Cancel</a>
+      <a href="#" data-dismiss="modal" class="btn btn-primary add">Add</a>
+    </div>
+  </script>
+
   <script type="text/template" id="engine-template">
       <div class="engine-wrapper">
-        <button class='btn pull-right remove'>X</button>
-        <button class='btn pull-right add'>+</button>
         <img class='icon pull-left' src="<%= get("icon") %>"/>
+        <span style="font-size:150%;line-height:200%;" class='muted pull-right'>&#8801;</span>
         <div class="name"><%= get("name") %></div>
         <div class="">
-          <span class="url"><%= _.trimUrl(get("queryURL")) %></span>
+          <span class="url"><%= trimUrl() %></span>
           <span class="attributes">
-          <% if (_.isGeo(get("queryURL"))) { %>
-            <img title="Location base results (geolocation)" src="../img/Geolocation-16.png" />
+          <% if (isGeo()) { %>
+            <img title="Location base results (geolocation)" src="img/Geolocation-16.png" />
           <% } %>
-          <% if (_.isHttps(get("queryURL"))) { %>
-            <img title="Secure Connection (https)" src="../img/identity-icons-https.png" />
+          <% if (isHttps()) { %>
+            <img title="Secure Connection (https)" src="img/identity-icons-https.png" />
           <% } %>
-          <% if (!_.isEmpty(get("suggestionURL"))) { %>
-            <img title="Search Suggestions" src="../img/orion-task.png" />
+          <% if (hasSuggestions()) { %>
+            <img title="Search Suggestions" src="img/orion-task.png" />
           <% } %>
           </span>
         </div>
       </div>
   </script>
 
+<!--
+  <script type="text/javascript" src="js/jquery.min.js"></script>
+  <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="js/underscore.min.js"></script>
+  <script type="text/javascript" src="js/backbone.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap-transition.js"></script>
+  <script type="text/javascript" src="js/bootstrap-modal.js"></script>
+  <script type="text/javascript" src="js/bootstrap-tooltip.js"></script>
 
-  <!--<script type="text/javascript" src="js/jquery.js"></script>-->
-  <!--<script type="text/javascript" src="js/jquery-ui-1.8.23.custom.js"></script>-->
-  <!--<script type="text/javascript" src="js/underscore.js"></script>-->
-  <!--<script type="text/javascript" src="js/backbone.js"></script>-->
-  <!--<script type="text/javascript" src="js/bootstrap-tooltip.js"></script>-->
-
-  <!--<script type="text/javascript" src="js/preferences.js"></script>-->
+  <script type="text/javascript" src="js/index.js"></script>
+-->
 
 </body>
 </html>
