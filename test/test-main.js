@@ -1,15 +1,18 @@
 /* This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
 "use strict";
+
+/*global setTimeout:true */
 
 var Loader = require("sdk/test/loader").Loader;
 
-var isBrowser = require("window/utils").isBrowser;
-var winUtils = require("window-utils");
-var tabs = require("tabs");
-var searchbar = require("searchbar");
-var timer = require("api-utils/timer");
+var getMostRecentBrowserWindow = require('sdk/window/utils').getMostRecentBrowserWindow,
+    isBrowser = require('sdk/window/utils').isBrowser,
+    tabs = require('sdk/tabs'),
+    searchbar = require('searchbar'),
+    setTimeout = require('sdk/timers').setTimeout;
 
 exports.test_id = function (test) {
   test.assert(require("self").id.length > 0);
@@ -19,7 +22,7 @@ exports["zzz last test uninstall"] = function (test) {
   var loader = new Loader(module),
       main = loader.require("main"),
       getById = function (id) {
-        return winUtils.activeBrowserWindow.document.getElementById(id);
+        return getMostRecentBrowserWindow().document.getElementById(id);
       };
 
   test.assertNotNull(getById(searchbar.SEARCH_TEXTBOX),
@@ -53,7 +56,7 @@ exports["zzz last test uninstall"] = function (test) {
 exports["clear search on tab close"] = function (test) {
   var loader = new Loader(module),
       main = loader.require("main"),
-      document = winUtils.activeBrowserWindow.document,
+      document = getMostRecentBrowserWindow().document,
       event = document.createEvent("KeyEvents");
 
   main.main();
@@ -79,12 +82,12 @@ exports["clear search on tab close"] = function (test) {
       searchbar.getSearchTextBox().focus();
 
       // give the panel a moment to open and initialize
-      timer.setTimeout(function () {
+      setTimeout(function () {
         // send a key event to trigger a search via the "enter key"
         event.initKeyEvent("keyup",        //  in DOMString typeArg,
                            true,             //  in boolean canBubbleArg,
                            true,             //  in boolean cancelableArg,
-                           winUtils.activeBrowserWindow.document.defaultView,             //  in nsIDOMAbstractView viewArg
+                           getMostRecentBrowserWindow().document.defaultView,             //  in nsIDOMAbstractView viewArg
                            false,            //  in boolean ctrlKeyArg,
                            false,            //  in boolean altKeyArg,
                            false,            //  in boolean shiftKeyArg,
@@ -97,7 +100,7 @@ exports["clear search on tab close"] = function (test) {
     },
     onClose : function onClose(tab) {
       // escape from our other onClose function
-      timer.setTimeout(function () {
+      setTimeout(function () {
         test.assertEqual(searchbar.getSearchTextBox().value, "",
                          "Search entry should have cleared value");
         test.done();
