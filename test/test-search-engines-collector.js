@@ -42,6 +42,9 @@ var FOURSQUARE_URI = module.uri.replace(TEST_FILE, FOURSQUARE_OPENSEARCH_FILE);
 
 //console.log("FOURSQUARE_OPENSEARCH_FILE", FOURSQUARE_OPENSEARCH_FILE, "FOURSQUARE_URI", FOURSQUARE_URI);
 
+var WORDPRESS_OPENSEARCH_FILE = "fixtures/wordpress-opensearch.xml";
+var WORDPRESS_URI = module.uri.replace(TEST_FILE, WORDPRESS_OPENSEARCH_FILE);
+
 // Borrowed from: test-harness/tests/test-tmp-file.js
 // Utility function that synchronously reads local resource from the given
 // `uri` and returns content string. Read in binary mode.
@@ -122,7 +125,7 @@ exports.testCollectorWikipedia = function (test) {
   });
 
   var dataurl = new DataURL("data:application/opensearchdescription+xml;charset=utf-8," + escape(readBinaryURI(WIKIPEDIA_URI)));
-  SearchEnginesCollector.getEngineByXMLURL(dataurl.toString());
+  SearchEnginesCollector.getEngineByXMLURL(dataurl.toString(), "http://en.wikipedia.org/");
   test.waitUntilDone(5 * 1000);
 };
 
@@ -141,6 +144,25 @@ exports.testCollectorFoursquare = function (test) {
   });
 
   var dataurl = new DataURL("data:application/opensearchdescription+xml;charset=utf-8," + escape(readBinaryURI(FOURSQUARE_URI)));
-  SearchEnginesCollector.getEngineByXMLURL(dataurl.toString());
+  SearchEnginesCollector.getEngineByXMLURL(dataurl.toString(), "http://foursquare.com/");
+  test.waitUntilDone(5 * 1000);
+};
+
+exports.testCollectorWordpress = function (test) {
+  SearchEnginesCollector.allowed = true;
+  SearchEnginesCollector.once("engine", function onCollectorWordpress(collected) {
+    SearchEnginesCollector.removeListener("engine", onCollectorWordpress);
+
+    test.assertEqual(collected.name, "WordPress.com", "Wordpress name is correct");
+    test.assertEqual(collected.queryURL, "http://en.wordpress.com/?s={searchTerms}", "Wordpress Query URL is correct");
+    test.assertEqual(collected.suggestionURL, "", "Wordpress Suggestion URL is not empty");
+    test.assertEqual(collected.icon, "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABu0lEQVQ4jb3TTWvTABjA8X6S4E0RRJjb3Dy4mycv9SAVNi8WZAp+gh08jR0iOMWuHXFMJ4GMyl5qfcER1pqsimmatROWLlBsWjG1TsEWrK75e9Z0YyB6eG7P84PnLSSIKn8ToX8G9MU0RpMWY0mL/hnt8MCpmIZkVJnKOkQWC0QUk8mMw1zeZSAehEJ/FsubdY7fyQQSw7JBZbfNYFzfH3iy7ZG2PcZXS5xfeMuDgotkVDkr5ZCMKgDPyo3eQF9MI217AFxdKSGIKvJmnUarw5FbKiNSjp/dLmnbYyihB4HRpMWlxQLlZovUtocgqlxUTAAiiokgqrx2v3D5sUV0qRgExpIWEcVkKuvQ/rHH0dvrXEtt8fHbdxasGoKoIhlVwrJBdLkH0D+jMZlxOJ3Q6fo+46slJtZspjcqNNsdzs2/4Xpqi5tqmTOzG72HOJd3OTadQXu/y3rlMzfS7xi5n8P3fZ7vNDh57xXzprv/FgbiGo+sGhNrNp29LifuZhFElXz9Ky92Gjws1BiePWCNgqgyGNdRSh8oN1tckPOEZYOntsdL51Og+MBTHkroXFkqEl0u/tbz/3umw8YvjZutq3XUg9MAAAAASUVORK5CYII=",
+                     "Wordpress Icon is not correct");
+
+    test.done();
+  });
+
+  var dataurl = new DataURL("data:application/opensearchdescription+xml;charset=utf-8," + escape(readBinaryURI(WORDPRESS_URI)));
+  SearchEnginesCollector.getEngineByXMLURL(dataurl.toString(), "http://en.wordpress.com/");
   test.waitUntilDone(5 * 1000);
 };

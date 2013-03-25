@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<OpenSearchDescription xmlns="http://a9.com/-/spec/opensearch/1.1/" xmlns:moz="http://www.mozilla.org/2006/browser/search/">
+	<ShortName>WordPress.com</ShortName>
+	<Description>Search WordPress.com - </Description>
+	<Contact>support@wordpress.com</Contact>
+	<Url type="application/atom+xml" template="http://en.wordpress.com/?s={searchTerms}&amp;feed=atom"/>
+	<Url type="application/rss+xml"  template="http://en.wordpress.com/?s={searchTerms}&amp;feed=rss2"/>
+	<Url type="text/html"            template="http://en.wordpress.com/?s={searchTerms}" method="GET" />
+	<Url type="application/opensearchdescription+xml" rel="self" template="/osd.xml" />
+	<LongName>WordPress.com</LongName>
+	<Image height="16" width="16" type="image/vnd.microsoft.icon">http://0.gravatar.com/blavatar/4e21d703d81809d215ceaabbf07efbc6?s=16&#038;d=http%3A%2F%2Fen.wordpress.com%2Ffavicon.ico</Image>
+	<Image height="64" width="64" type="image/png">http://0.gravatar.com/blavatar/653166773dc88127bd3afe0b6dfe5ea7?s=64&#038;d=http%3A%2F%2Fs0.wp.com%2Fi%2Flogo%2Fgray-white-transparent-64.png</Image>
+	<Query role="example" searchTerms="photography" />
+	<Tags>blog</Tags>
+	<Developer>Automattic</Developer>
+	<SyndicationRight>open</SyndicationRight>
+	<AdultContent>false</AdultContent>
+	<Language>en</Language>
+	<OutputEncoding>UTF-8</OutputEncoding>
+	<InputEncoding>UTF-8</InputEncoding>
+	<moz:SearchForm>http://en.wordpress.com</moz:SearchForm>
+</OpenSearchDescription>
