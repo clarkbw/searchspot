@@ -4,7 +4,11 @@
 
 "use strict";
 
-if (!require("api-utils/xul-app").is("Firefox")) {
+module.metadata = {
+  "stability": "stable"
+};
+
+if (!require("./system/xul-app").is("Firefox")) {
   throw new Error([
     "The panel module currently supports only Firefox.  In the future ",
     "we would like it to support other applications, however.  Please see ",
@@ -15,11 +19,12 @@ if (!require("api-utils/xul-app").is("Firefox")) {
 
 const { Cc, Ci } = require("chrome");
 
-const { validateOptions: valid } = require("api-utils/api-utils");
-const { Symbiont } = require("api-utils/content");
-const { EventEmitter } = require('api-utils/events');
-const timer = require("api-utils/timer");
-const runtime = require("api-utils/runtime");
+const { validateOptions: valid } = require('./deprecated/api-utils');
+const { Symbiont } = require('./content/content');
+const { EventEmitter } = require('./deprecated/events');
+const timer = require('./timers');
+const runtime = require('./system/runtime');
+const { getMostRecentBrowserWindow } = require('./window/utils');
 
 const windowMediator = Cc['@mozilla.org/appshell/window-mediator;1'].
                        getService(Ci.nsIWindowMediator);
@@ -391,7 +396,7 @@ function getWindow(anchor) {
   // If we didn't find the anchor's window (or we have no anchor),
   // return the most recent browser window.
   if (!window)
-    window = windowMediator.getMostRecentWindow("navigator:browser");
+    window = getMostRecentBrowserWindow();
 
   return window;
 }
