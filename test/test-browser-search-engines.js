@@ -3,7 +3,7 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 "use strict";
 
-const { BrowserSearchEngines, SearchEngine } = require("browser-search-engine");
+const { BrowserSearchEngines, SearchEngine, URLTYPE_SUGGEST_JSON, URLTYPE_SEARCH_HTML } = require("browser-search-engine");
 
 const WIKIPEDIA_NAME = "Wikipedia (en)" ;
 const AMAZON_NAME = "Amazon.com";
@@ -45,7 +45,7 @@ exports.test002MissingSuggest = function(test) {
 
 exports.test003HasSuggest = function(test) {
   [
-   { name : "Amazon.com", url : "http://completion.amazon.com/search/complete?method=completion&search-alias=aps&mkt=1&q=search" },
+   //{ name : "Amazon.com", url : "http://completion.amazon.com/search/complete?method=completion&search-alias=aps&mkt=1&q=search" },
    { name : "Wikipedia (en)", url : "http://en.wikipedia.org/w/api.php?action=opensearch&search=search" },
    { name : "Google", url : "https://www.google.com/complete/search?client=firefox&q=search" },
    { name : "Yahoo", url : "http://ff.search.yahoo.com/gossip?output=fxjson&command=search" },
@@ -113,7 +113,18 @@ exports.test009AddEngineWithSuggest = function(test) {
   BrowserSearchEngines.add(engine);
   var yelp = BrowserSearchEngines.get(engine.alias);
   test.assertNotNull(yelp, "Found the Yelp Engine");
+  test.assert(yelp.supportsResponseType(URLTYPE_SUGGEST_JSON));
 
   BrowserSearchEngines.remove(BrowserSearchEngines.get(YELP_ENGINE.alias));
-  BrowserSearchEngines.get(YELP_ENGINE.alias);
+};
+
+exports.test010CheckSupportsSuggest = function(test) {
+  var google = BrowserSearchEngines.get('Google');
+  test.assert(google.supportsResponseType(URLTYPE_SUGGEST_JSON));
+};
+
+exports.test011CheckSupportsApprovedTypes = function(test) {
+  var google = BrowserSearchEngines.get('Google');
+  test.assert(google.supportsResponseType(URLTYPE_SEARCH_HTML));
+  test.assert(!google.supportsResponseType("text/xml"));
 };
