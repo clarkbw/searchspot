@@ -54,6 +54,9 @@ img {
     position: absolute;
     top: -1px;
 }
+#welcome {
+  padding-top: 60px;
+}
 .footer {
   padding: 70px 0px;
   margin-top: 70px;

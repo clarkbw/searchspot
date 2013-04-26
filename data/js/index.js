@@ -306,6 +306,25 @@ $(document).ready(function () {
     $(this).tooltip('hide');
   });
 
+  if (window.location.hash === '#welcome') {
+    // wait until the loading / rendering has finished
+    window.setTimeout(function () {
+      $('html, body').animate({ scrollTop: $("#welcome").offset().top },
+                              1000,
+                              function () { $("#welcome").fadeTo(1000 * 2, 1.0); });
+    }, 1000);
+  }
+
+  $(".install-yelp").click(function () {
+    new GeoPermissionView({'model' : PrefsApp.otherslist.get('http://www.yelp.com/opensearch'),
+                          'defaultsview' : PrefsApp.defaultsview,
+                          'defaultslist' : PrefsApp.defaultslist, 'position' : 2 });
+  });
+
+  $(".close-tab").click(function () {
+    addon.port.emit('close-tab');
+  });
+
   // We only want to continue if we're debugging
   if (window.location.protocol !== "file:") {
     return;

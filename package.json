@@ -22,7 +22,7 @@
         "title": "Participate with the anonymous community statistics",
         "description": "Anonymously share statistics about the search engines you use to help improve this add-on",
         "type": "bool",
-        "value": false
+        "value": true
     },
     {
         "name" : "allowSearchEngineCollector",
