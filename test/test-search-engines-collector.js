@@ -118,8 +118,8 @@ exports.testCollectorWikipedia = function (test) {
     test.assertEqual(collected.name, "Wikipedia (en)", "Wikipedia name is correct");
     test.assertEqual(collected.queryURL, "http://en.wikipedia.org/w/index.php?title=Special:Search&search={searchTerms}", "Wikipedia Query URL is correct");
     test.assertEqual(collected.suggestionURL, "http://en.wikipedia.org/w/api.php?action=opensearch&search={searchTerms}&namespace=0", "Wikipedia Suggestion URL is correct");
-    test.assertEqual(collected.icon, "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABS0lEQVQ4jcWTwY3EIAxFR6MUETpwDaPcQwekBVICOUIRLiGUQBqYlAAdhB6I/h5GQZPdaLXSrrQHDljW8/e3fSt7wW/e7f8BYQlQg4LsJcISUPYCP3vIXsJMBjFFlL3ATAZqUIgpIqYIPWqoQb0UOOtARBVQ9gLZSxARYorIW4azDsyMshfkLUOPGsz8AsQUIVoBPWrkLaPsBcwM0Qr42WN9rtCjrvADcPJADQqiFVifKw7oocJZBz/7CghLqP/be1C0As66msjMaO4N1KBO1Z11td3TFGQvIXtZjYspont0kL2sOTFFmMlcj9FZh+beVHkH4N1gZq5mXu4BEUENCnnL8LOHHjW6R1dNc9ZVoy8Bzjp0jw5mMvCzr5KJCMx88ugS4GcPIgIR1VbCEmrsmNK3q/zZzLIX6FGDiH52C2EJXyrFFE+b+mfH9AGWL1wAegygIwAAAABJRU5ErkJggg==",
-                     "Wikipedia Icon is correct");
+    test.assertEqual(collected.icon, "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABo0lEQVQ4ja2TO4siQRSFC5lJOlUjEQQDE8FYRREFBUEwMDEcEJPGH2BsZiQoBgaiYCoiBv4FwRZDTQQROxE0sum2H3wT7EzDrLvs80Z1LnW+OkXVFcAr8Aas+f1af3hexcfib+tN/OHJT0mEbdvouo6u6xiGAeBq0zRxHMfVjuNgmqarbdtGbLdbMpkMQgh6vR6O41AoFBBCMBwOOZ1OJBIJcrkcqqoym83wer2Uy2V2ux0C4Hg88vLywnw+B0DTNEKhEN1uF4BsNsvtdgPg8XiQTCaxLAvgGwCgWq2SSqXcyw0GA4LBINPplHa77fYnkwn9ft/VLmCz2SCEYLVaAWBZFuFwmFgshq7rrqFYLKJp2jPgM2qlUnG1LMv4fD43rqIoNJvNL8/wBbBcLvF4PBwOBwBKpRJ+v5/xeAxAvV5HVdWfAwCi0SiyLLNYLOh2u7RaLSKRCJfLhVqt9v32Z8BoNEKSJPL5PIZhcL1ekSSJeDyOoii/BpimSSAQoNPpuL1Go0E6nX4yfwKevvJ+v8dxHFff73fO5/OP/Ov/Mkz/NM7vB+B52iVL10sAAAAASUVORK5CYII=",
+                     "Wikipedia Icon is not correct");
 
     test.done();
   });
@@ -150,7 +150,7 @@ exports.testCollectorFoursquare = function (test) {
 
 exports.testCollectorWordpress = function (test) {
   SearchEnginesCollector.allowed = true;
-  SearchEnginesCollector.once("engine", function onCollectorWordpress(collected) {
+  SearchEnginesCollector.on("engine", function onCollectorWordpress(collected) {
     SearchEnginesCollector.removeListener("engine", onCollectorWordpress);
 
     test.assertEqual(collected.name, "WordPress.com", "Wordpress name is correct");
