@@ -68,9 +68,10 @@ exports.test004IncorrectSiteURLs = function(test) {
   });
 }
 
-exports.test005GetDefaultEngine = function(test) {
+exports.test005GetEngine = function(test) {
   var amazon = BrowserSearchEngines.get(AMAZON_NAME);
   test.assertObject(amazon, "Amazon get");
+  test.assertEqual(amazon.name, AMAZON_NAME, "Amazon engine name matches");
 };
 
 exports.test006AddEngine = function(test) {
