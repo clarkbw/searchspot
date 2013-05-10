@@ -270,6 +270,9 @@ $(document).ready(function () {
       if ($(ui.item).parent() === null &&
           $(ui.item).data('geo') !== true) { // needs geolocation
         ui.item.trigger('stopped', [ui.item.index()]);
+      } else if ($(ui.item).parent() !== null) {
+        // when we just want to reorder within a list send the stopped event
+        ui.item.trigger('stopped', [ui.item.index()]);
       }
     },
     receive: function (event, ui) {
