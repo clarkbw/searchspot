@@ -56,19 +56,18 @@ var PortCollection = Backbone.Collection.extend({
     }.bind(this));
   },
   port_reset : function (engines) {
-    console.log("port_reset", this.port, engines);
+    //console.log("port_reset", this.port, engines);
     this.reset(engines.map(function (item) { return new Engine(item); }));
   },
   port_added : function (engine) {
-    console.log("port_add", this.port, engine);
+    //console.log("port_add", this.port, engine);
     this.add(new Engine(engine));
   },
   port_removed : function (engine) {
-    console.log("port_remove", this.port, engine);
+    //console.log("port_remove", this.port, engine);
     this.remove(new Engine(engine));
   },
   port_sorted : function (newOrder) {
-    console.log('sorted');
     // if this isn't a new sort order stop now so we don't loop events
     if (this.pluck('id').join(",") === newOrder.join(",")) {
       return;
@@ -92,7 +91,6 @@ var EngineView = Backbone.View.extend({
   },
   // change of the sort order inside a list
   stopped: function (event, index) {
-    console.log("stopped");
     this.$el.trigger('update-sort', [this.model, index]);
   },
   // new element added to this list
