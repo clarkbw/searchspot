@@ -105,6 +105,11 @@ var EngineView = Backbone.View.extend({
   render: function () {
     $(this.el).html(this.template(this.model));
     $(this.el).data({'geo' : this.model.isGeo(), 'id' : this.model.get('id')});
+    $(this.el).find(".attributes img").on("mouseover", function () {
+      $(this).tooltip('show');
+    }).on("mouseout", function () {
+      $(this).tooltip('hide');
+    });
     return this;
   }
 });
@@ -300,12 +305,6 @@ $(document).ready(function () {
     connectWith: ".engines",
     cursor : "move"
   }).disableSelection();
-
-  $(".attributes img").on("mouseover", function () {
-    $(this).tooltip('show');
-  }).on("mouseout", function () {
-    $(this).tooltip('hide');
-  });
 
   if (window.location.hash === '#welcome') {
     // wait until the loading / rendering has finished
