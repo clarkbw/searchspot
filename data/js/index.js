@@ -301,9 +301,9 @@ $(document).ready(function () {
     cursor : "move"
   }).disableSelection();
 
-  $(".attributes img").live("mouseover", function () {
+  $(".attributes img").on("mouseover", function () {
     $(this).tooltip('show');
-  }).live("mouseout", function () {
+  }).on("mouseout", function () {
     $(this).tooltip('hide');
   });
 
