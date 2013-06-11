@@ -2,3 +2,6 @@
 	path = .addon-sdk
 	url = https://github.com/mozilla/addon-sdk.git
 	ignore = untracked
+[submodule "packages/browser-search-engine"]
+	path = packages/browser-search-engine
+	url = git@github.com:clarkbw/browser-search-engine.git

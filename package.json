@@ -17,6 +17,9 @@
         "web": "https://github.com/clarkbw/searchspot/issues"
     },
     "id": "jid1-wB2HoBahvZDBDQ",
+    "dependencies": [
+        "browser-search-engine"
+    ],
     "preferences": [{
         "name": "allowStatisticsReporting",
         "title": "Participate with the anonymous community statistics",
