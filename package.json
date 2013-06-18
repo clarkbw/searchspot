@@ -18,7 +18,9 @@
     },
     "id": "jid1-wB2HoBahvZDBDQ",
     "dependencies": [
-        "browser-search-engine"
+        "browser-search-engine",
+        "geolocation",
+        "geocode"
     ],
     "preferences": [{
         "name": "allowStatisticsReporting",

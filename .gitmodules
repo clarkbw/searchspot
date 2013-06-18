@@ -5,3 +5,9 @@
 [submodule "packages/browser-search-engine"]
 	path = packages/browser-search-engine
 	url = git@github.com:clarkbw/browser-search-engine.git
+[submodule "packages/geocode"]
+	path = packages/geocode
+	url = git@github.com:clarkbw/fx-sdk-geocode.git
+[submodule "packages/geolocation"]
+	path = packages/geolocation
+	url = git@github.com:clarkbw/fx-sdk-geolocation.git
