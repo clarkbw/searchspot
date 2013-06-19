@@ -60,3 +60,13 @@ If you'd like to contribute here's how:
  * test (write or update tests for your changes)
  * pull request (send a pull request my way when you're done)
  * profit! (not sure how this one works)
+
+### useful commands
+
+ * First checkout
+ ** `git submodule foreach --recursive git submodule update --init`
+ * Updating submodules
+ ** `git submodule foreach --recursive git pull`
+ * Debug mode (for stats reporting mostly)
+ ** `cfx run --static-args="{\"debug\":\"true\"}"`
+ 
