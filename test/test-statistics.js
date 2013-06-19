@@ -16,7 +16,7 @@ const ExampleSearchEngine = SearchEngine("http://www.example.com/opensearch",
                                          "http://www.example.com/search_suggest?q={searchTerms}",
                                          "http://www.example.com/favicon.ico");
 
-require("observer-service").notify("search:debug", true);
+require('sdk/system/events').emit("search:debug", { subject : true });
 
 exports.testUsage = function(test) {
   // Make the reporter send out stats every second
@@ -38,7 +38,7 @@ exports.testUsage = function(test) {
       body += String.fromCharCode.apply(String, bodyStream.readByteArray(avail));
     }
 
-    var parsed = require("querystring").parse(body),
+    var parsed = require('sdk/querystring').parse(body),
         obj = JSON.parse(parsed.data);
 
     obj.data.forEach(function(item) {

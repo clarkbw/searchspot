@@ -16,7 +16,7 @@ var _se = require("search-engines"),
     SearchEngines = _se.SearchEngines,
     SearchEngine = _se.SearchEngine;
 
-var timers = require("timers");
+var timers = require('sdk/timers');
 
 var suggestEngine = new SearchEngine(
                       "http://www.example.com/opensearch",

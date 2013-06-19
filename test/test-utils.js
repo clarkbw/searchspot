@@ -11,7 +11,7 @@
 
 var utils = require('utils');
 var chrome = require("chrome");
-var data = require("self").data;
+var data = require('sdk/self').data;
 
 exports['test addXULStylesheet'] = function (assert, done) {
   var main = require('main');

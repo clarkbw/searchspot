@@ -15,7 +15,7 @@ var getMostRecentBrowserWindow = require('sdk/window/utils').getMostRecentBrowse
     setTimeout = require('sdk/timers').setTimeout;
 
 exports.test_id = function (test) {
-  test.assert(require("self").id.length > 0);
+  test.assert(require('sdk/self').id.length > 0);
 };
 
 exports["zzz last test uninstall"] = function (test) {
