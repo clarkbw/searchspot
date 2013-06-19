@@ -50,23 +50,3 @@ All tests are located in the [test](https://github.com/clarkbw/searchspot/tree/m
 ### Open Seach
 
 For more information on Open Search and how you can take advantage of the features in this add-on see the wiki page [Modern Open Search](https://github.com/clarkbw/searchspot/wiki/Modern-Open-Search)
-
-## Contribute
-
-If you'd like to contribute here's how:
-
- * fork (fork this repo into your own)
- * branch (create a branch, call it your_feature_branch)
- * test (write or update tests for your changes)
- * pull request (send a pull request my way when you're done)
- * profit! (not sure how this one works)
-
-### useful commands
-
- * First checkout
- ** `git submodule foreach --recursive git submodule update --init`
- * Updating submodules
- ** `git submodule foreach --recursive git pull`
- * Debug mode (for stats reporting mostly)
- ** `cfx run --static-args="{\"debug\":\"true\"}"`
- 
