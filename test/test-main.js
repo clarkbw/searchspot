@@ -34,21 +34,17 @@ exports["zzz last test uninstall"] = function (test) {
 
   test.assertNotNull(getById(searchbar.SEARCH_TEXTBOX),
                      "We should have a searchbar after running main()");
-  test.assertNotNull(getById(searchbar.SEARCH_TEXTBOX_OLD),
-                     "The old searchbar should exist after running main()");
-  test.assertEqual(getById(searchbar.SEARCH_TEXTBOX_OLD).getAttribute("hidden"),
+  test.assertEqual(getById(searchbar.SEARCH_TEXTBOX).getAttribute("disableautocomplete"),
                    "true",
                    "The old searchbar should be hidden after running main()");
 
   loader.unload("uninstall");
 
-  test.assertNull(getById(searchbar.SEARCH_TEXTBOX_OLD),
-                  "Old searchbar should be gone after uninstall");
-  test.assertEqual(getById(searchbar.SEARCH_TEXTBOX).getAttribute("hidden"),
+  test.assertEqual(getById(searchbar.SEARCH_TEXTBOX).getAttribute("disableautocomplete"),
                    "",
-                   "Original searchbar should be visible after uninstall");
+                   "autocomplete should be returned to normal");
   test.assertNotNull(getById(searchbar.SEARCH_TEXTBOX),
-                     "Original searchbar should be back after uninstall");
+                     "Original searchbar should still be around after uninstall");
 
   loader.unload();
 };
