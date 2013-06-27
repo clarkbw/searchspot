@@ -2,67 +2,61 @@
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+ /*jshint esnext:true, node:true, newcap:false */
+
 "use strict";
 
 /*global setTimeout:true */
 
-var Loader = require("sdk/test/loader").Loader;
+var { Loader } = require('sdk/test/loader');
 
-var getMostRecentBrowserWindow = require('sdk/window/utils').getMostRecentBrowserWindow,
-    isBrowser = require('sdk/window/utils').isBrowser,
+var { getMostRecentBrowserWindow } = require('sdk/window/utils'),
+    { isBrowser } = require('sdk/window/utils'),
     tabs = require('sdk/tabs'),
     searchbar = require('searchbar'),
-    setTimeout = require('sdk/timers').setTimeout;
+    { setTimeout } = require('sdk/timers');
 
-exports.test_id = function (test) {
-  test.assert(require('sdk/self').id.length > 0);
-};
 
-exports["zzz last test uninstall"] = function (test) {
+exports['test zzz last test uninstall'] = function (assert) {
   var loader = new Loader(module),
       main = loader.require("main"),
       getById = function (id) {
         return getMostRecentBrowserWindow().document.getElementById(id);
       };
 
-  test.assertNotNull(getById(searchbar.SEARCH_TEXTBOX),
-                     "We should have a searchbar by default");
-  //test.assertNull(getById(searchbar.SEARCH_TEXTBOX_OLD),
-  //                "The old searchbar should not exist until we run main()");
+  assert.notEqual(getById(searchbar.SEARCH_TEXTBOX), null,
+                  "We should have a searchbar by default");
 
   main.main();
 
-  test.assertNotNull(getById(searchbar.SEARCH_TEXTBOX),
-                     "We should have a searchbar after running main()");
-  test.assertEqual(getById(searchbar.SEARCH_TEXTBOX).getAttribute("disableautocomplete"),
-                   "true",
-                   "The old searchbar should be hidden after running main()");
-
-  loader.unload("uninstall");
-
-  test.assertEqual(getById(searchbar.SEARCH_TEXTBOX).getAttribute("disableautocomplete"),
-                   "",
-                   "autocomplete should be returned to normal");
-  test.assertNotNull(getById(searchbar.SEARCH_TEXTBOX),
-                     "Original searchbar should still be around after uninstall");
+  assert.notEqual(getById(searchbar.SEARCH_TEXTBOX), null,
+                  "We should have a searchbar after running main()");
+  assert.equal(getById(searchbar.SEARCH_TEXTBOX).getAttribute("disableautocomplete"),
+              "true", "The old searchbar should be hidden after running main()");
 
   loader.unload();
+
+  assert.equal(getById(searchbar.SEARCH_TEXTBOX).getAttribute("disableautocomplete"),
+               "", "autocomplete should be returned to normal");
+
+  assert.notEqual(getById(searchbar.SEARCH_TEXTBOX), null,
+                  "Original searchbar should still be around after uninstall");
 };
 
-exports["clear search on tab close"] = function (test) {
+exports['test clear search on tab close'] = function (assert, done) {
   var loader = new Loader(module),
       main = loader.require("main"),
-      document = getMostRecentBrowserWindow().document,
-      event = document.createEvent("KeyEvents");
+      terms = 'harry';
 
   main.main();
 
-  tabs.on("ready", function (tab) {
+  tabs.on("ready", function onReady(tab) {
     // ignore the tab we opened and any other tabs being opened by other tests
     if (tab.url !== "about:blank" && tab.url.indexOf("resource://") !== 0) {
-      test.assertEqual(searchbar.getSearchTextBox().value, "harry",
-                       "Selected suggestion should be equal to the text entry");
+      assert.equal(searchbar.getSearchTextBox().value, terms,
+                  "Selected suggestion should be equal to the text entry");
       tab.close();
+      tabs.removeListener("ready", onReady);
     }
   });
 
@@ -72,37 +66,27 @@ exports["clear search on tab close"] = function (test) {
     inBackground : false,
     onOpen: function onOpen(tab) {
       // set a new search
-      searchbar.getSearchTextBox().value = "harry";
+      searchbar.getSearchTextBox().value = terms;
     },
     onReady : function onReady(tabs) {
       searchbar.getSearchTextBox().focus();
+      main.SearchSpotPanel.show(searchbar.getSearchTextBox());
 
       // give the panel a moment to open and initialize
       setTimeout(function () {
-        // send a key event to trigger a search via the "enter key"
-        event.initKeyEvent("keyup",        //  in DOMString typeArg,
-                           true,             //  in boolean canBubbleArg,
-                           true,             //  in boolean cancelableArg,
-                           getMostRecentBrowserWindow().document.defaultView,             //  in nsIDOMAbstractView viewArg
-                           false,            //  in boolean ctrlKeyArg,
-                           false,            //  in boolean altKeyArg,
-                           false,            //  in boolean shiftKeyArg,
-                           false,            //  in boolean metaKeyArg,
-                           0x0D,               //  in unsigned long keyCodeArg,
-                           0);              //  in unsigned long charCodeArg
-        searchbar.getSearchTextBox().focus();
-        searchbar.getSearchTextBox().dispatchEvent(event);
+        main.SearchSpotPanel.port.emit("go");
       }, 2 * 1000);
     },
     onClose : function onClose(tab) {
       // escape from our other onClose function
       setTimeout(function () {
-        test.assertEqual(searchbar.getSearchTextBox().value, "",
+        assert.equal(searchbar.getSearchTextBox().value, "",
                          "Search entry should have cleared value");
-        test.done();
         loader.unload();
+        done();
       }, 100);
     }
   });
-  test.waitUntilDone(10 * 1000);
 };
+
+require('test').run(exports);
