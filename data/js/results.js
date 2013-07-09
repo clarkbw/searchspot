@@ -377,6 +377,12 @@ var SuggestionView = Backbone.View.extend({
       $(this.el).html(this._highlight(suggestion, terms));
     }
 
+    this.$el.on("mouseover", function () {
+      // remove all other possibly selected results
+      $(".suggestion").removeClass("focused");
+      $(this).addClass("focused").parent().trigger("mouseenter");
+    });
+
     if (this.model.hasChanged("suggestion")) {
       addon.port.emit("resize", { "width" : $("#results").width(),
                                   "height" : $("#results").height() });
@@ -428,6 +434,12 @@ var EngineView = Backbone.View.extend({
       }
       this.$el.append($el.disableSelection());
     }.bind(this));
+
+    this.$el.on("mouseover", function () {
+      $(".engine").removeClass("focused");
+      $(this).addClass("focused");
+    });
+
     addon.port.emit("resize", { "width" : $("#results").width(),
                                 "height" : $("#results").height() });
     return this;
@@ -491,17 +503,6 @@ $(document).ready(function () {
 
   $("#preferences").click(function () {
     addon.port.emit("preferences");
-  });
-
-  $(".engine").live("mouseover", function () {
-    $(".engine").removeClass("focused");
-    $(this).addClass("focused");
-  });
-
-  $(".suggestion").live("mouseover", function () {
-    // remove all other possibly selected results
-    $(".suggestion").removeClass("focused");
-    $(this).addClass("focused").parent().trigger("mouseenter");
   });
 
   // We only want to continue if we're debugging
