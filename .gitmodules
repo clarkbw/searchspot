@@ -11,3 +11,6 @@
 [submodule "packages/geolocation"]
 	path = packages/geolocation
 	url = git@github.com:clarkbw/fx-sdk-geolocation.git
+[submodule "packages/indexed-db-storage"]
+	path = packages/indexed-db-storage
+	url = git@github.com:clarkbw/indexed-db-storage.git

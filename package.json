@@ -20,7 +20,8 @@
     "dependencies": [
         "browser-search-engine",
         "geolocation",
-        "geocode"
+        "geocode",
+        "indexed-db-storage"
     ],
     "preferences": [{
         "name": "allowStatisticsReporting",
