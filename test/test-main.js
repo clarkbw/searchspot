@@ -50,16 +50,6 @@ exports['test clear search on tab close'] = function (assert, done) {
 
   main.main();
 
-  tabs.on("ready", function onReady(tab) {
-    // ignore the tab we opened and any other tabs being opened by other tests
-    if (tab.url !== "about:blank" && tab.url.indexOf("resource://") !== 0) {
-      assert.equal(searchbar.getSearchTextBox().value, terms,
-                  "Selected suggestion should be equal to the text entry");
-      tab.close();
-      tabs.removeListener("ready", onReady);
-    }
-  });
-
   // open a new tab an run a search in it
   tabs.open({
     url : "about:blank",
@@ -68,9 +58,16 @@ exports['test clear search on tab close'] = function (assert, done) {
       // set a new search
       searchbar.getSearchTextBox().value = terms;
     },
-    onReady : function onReady(tabs) {
+    onReady : function onReady(tab) {
       searchbar.getSearchTextBox().focus();
       main.SearchSpotPanel.show(searchbar.getSearchTextBox());
+
+      // ready for the next ready
+      tab.once("ready", function onNextReady(tab) {
+        assert.equal(searchbar.getSearchTextBox().value, terms,
+                    "Selected suggestion should be equal to the text entry");
+        tab.close();
+      });
 
       // give the panel a moment to open and initialize
       setTimeout(function () {
