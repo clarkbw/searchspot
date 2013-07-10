@@ -59,20 +59,32 @@ exports['test clear search on tab close'] = function (assert, done) {
       searchbar.getSearchTextBox().value = terms;
     },
     onReady : function onReady(tab) {
-      searchbar.getSearchTextBox().focus();
-      main.SearchSpotPanel.show(searchbar.getSearchTextBox());
+      tabs.open({url: "about:newtab",
+        onOpen : function(t) {
+          assert.equal(searchbar.getSearchTextBox().value, terms,
+                      "On tab change our text should stay the same");
 
-      // ready for the next ready
-      tab.once("ready", function onNextReady(tab) {
-        assert.equal(searchbar.getSearchTextBox().value, terms,
-                    "Selected suggestion should be equal to the text entry");
-        tab.close();
+          // return to our original tab
+          tab.activate();
+          // close our empty new tab
+          t.close();
+
+          searchbar.getSearchTextBox().focus();
+          main.SearchSpotPanel.show(searchbar.getSearchTextBox());
+
+          // ready for the next ready
+          tab.once("ready", function onNextReady(tab) {
+            assert.equal(searchbar.getSearchTextBox().value, terms,
+                        "Selected suggestion should be equal to the text entry");
+            tab.close();
+          });
+
+          // give the panel a moment to open and initialize
+          setTimeout(function () {
+            main.SearchSpotPanel.port.emit("go");
+          }, 2 * 1000);
+        }
       });
-
-      // give the panel a moment to open and initialize
-      setTimeout(function () {
-        main.SearchSpotPanel.port.emit("go");
-      }, 2 * 1000);
     },
     onClose : function onClose(tab) {
       // escape from our other onClose function
