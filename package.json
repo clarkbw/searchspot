@@ -22,13 +22,7 @@
         "geolocation",
         "geocode"
     ],
-    "preferences": [{
-        "name": "allowStatisticsReporting",
-        "title": "Participate with the anonymous community statistics",
-        "description": "Anonymously share statistics about the search engines you use to help improve this add-on",
-        "type": "bool",
-        "value": true
-    },
+    "preferences": [
     {
         "name" : "allowSearchEngineCollector",
         "title": "Automatic search engine collection",
