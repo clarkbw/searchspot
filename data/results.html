@@ -6,21 +6,13 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <link href="css/common.css" rel="stylesheet">
 
   <title>searchspot results</title>
 
   <style>
-    * {
-        margin: 0;
-        padding: 0;
-        -moz-box-sizing: border-box;
-    }
-
     body {
-      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-      font-size: 14px;
-      line-height: 20px;
-      color: #333333;
+      line-height: 16px;
       background-color: #fff;
       height: 100%;
       overflow: hidden;
@@ -38,7 +30,7 @@
     }
 
     /*  only show the name of the engine when hovering  */
-    .engine.selected .name {
+    .engine.focused .name {
       display: inline-block;
     }
 
@@ -87,6 +79,8 @@
       position: absolute;
       left: 8px;
       top: 8px;
+      width: 16px;
+      height: 16px;
     }
 
     #http_en_wikipedia_org_w_opensearch_desc_php .suggestion:not(.default) {
