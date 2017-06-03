@@ -1,5 +1,7 @@
 # searchspot
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/clarkbw/searchspot.svg)](https://greenkeeper.io/)
+
 `searchspot` is the code for the [Awesome Search](https://addons.mozilla.org/en-us/firefox/addon/awesome-search/) Firefox add-on.
 
 ## What is Awesome Search?
